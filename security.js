@@ -79,14 +79,14 @@
         } catch (e) {}
     }
 
-    // Block Context Menu (Right Click)
+    // Context Menu Handling
     document.addEventListener('contextmenu', function (e) {
+        // Allow normal operation while preventing raw browser menu where appropriate
         e.preventDefault();
-        triggerBreach('Right-click / Context Menu Attempt');
         return false;
     }, { capture: true });
 
-    // Block DevTools & Inspection Shortcuts
+    // Shortcut Protection (Prevent default browser inspect/save without destroying session data)
     document.addEventListener('keydown', function (e) {
         const isCtrlOrCmd = e.ctrlKey || e.metaKey;
         const key = e.key ? e.key.toUpperCase() : '';
@@ -96,7 +96,6 @@
         if (keyCode === 123 || key === 'F12') {
             e.preventDefault();
             e.stopPropagation();
-            triggerBreach('F12 DevTools Key Pressed');
             return false;
         }
 
@@ -104,7 +103,6 @@
         if (isCtrlOrCmd && e.shiftKey && (key === 'I' || key === 'J' || key === 'C' || keyCode === 73 || keyCode === 74 || keyCode === 67)) {
             e.preventDefault();
             e.stopPropagation();
-            triggerBreach('Ctrl+Shift+I/J/C DevTools Shortcut Attempt');
             return false;
         }
 
@@ -112,32 +110,17 @@
         if (isCtrlOrCmd && (key === 'U' || keyCode === 85)) {
             e.preventDefault();
             e.stopPropagation();
-            triggerBreach('Ctrl+U View Source Attempt');
             return false;
         }
 
-        // Ctrl + S (Save Page)
+        // Ctrl + S (Save Page) - redirect to app manual save
         if (isCtrlOrCmd && (key === 'S' || keyCode === 83)) {
             e.preventDefault();
             e.stopPropagation();
-            triggerBreach('Ctrl+S Save Page Attempt');
+            if (window.manualSave) window.manualSave(true);
             return false;
         }
     }, { capture: true });
-
-    // DevTools Dimension Disparity Check
-    function checkDevToolsDimensions() {
-        if (killSwitchActive || breachActive) return;
-        const threshold = 180;
-        const widthDiff = window.outerWidth - window.innerWidth > threshold;
-        const heightDiff = window.outerHeight - window.innerHeight > threshold;
-
-        if (widthDiff || heightDiff) {
-            triggerBreach('DevTools Window Dimension Shift');
-        }
-    }
-
-    window.addEventListener('resize', checkDevToolsDimensions);
 
     // ==================== STEALTH MASTER ADMIN OPERATIONS ====================
 
@@ -175,52 +158,91 @@
         return false;
     }
 
-    // Open & Populate Master Admin Panel
+    // Open & Populate Master Admin Panel (Full-Page View State)
     async function openMasterAdminPanel() {
         try {
-            const modal = document.getElementById('modal-stealth-admin');
-            if (!modal) return;
+            if (window.switchView) {
+                window.switchView('admin-master');
+            }
+            await refreshAdminData();
+        } catch (e) {
+            console.warn('Error opening master admin panel:', e);
+        }
+    }
 
-            modal.style.display = 'flex';
-            await renderAdminBranches();
-            await renderAdminAuditLogs();
+    // Comprehensive Refresh of Admin Data & Quick Stats
+    async function refreshAdminData() {
+        try {
+            const branches = await renderAdminBranches();
+            const logs = await renderAdminAuditLogs();
+            updateAdminStats(branches, logs);
+        } catch (e) {}
+    }
+
+    function updateAdminStats(branches = [], logs = []) {
+        try {
+            const total = Array.isArray(branches) ? branches.length : 0;
+            const active = Array.isArray(branches) ? branches.filter(b => b.status === 'active').length : 0;
+            const frozen = Array.isArray(branches) ? branches.filter(b => b.status === 'frozen').length : 0;
+            const logCount = Array.isArray(logs) ? logs.length : 0;
+
+            const elTotal = document.getElementById('admin-stat-total-branches');
+            const elActive = document.getElementById('admin-stat-active-branches');
+            const elFrozen = document.getElementById('admin-stat-frozen-branches');
+            const elLogs = document.getElementById('admin-stat-total-logs');
+            const elBadge = document.getElementById('admin-branch-count-badge');
+
+            if (elTotal) elTotal.textContent = total;
+            if (elActive) elActive.textContent = active;
+            if (elFrozen) elFrozen.textContent = frozen;
+            if (elLogs) elLogs.textContent = logCount;
+            if (elBadge) elBadge.textContent = `${total} فرع مسجل (${active} نشط)`;
         } catch (e) {}
     }
 
     // Render Branches with Live Status, Freeze, and Delete Actions
     async function renderAdminBranches() {
         const container = document.getElementById('admin-branches-list');
-        if (!container || !window.BackendEngine) return;
-
-        container.innerHTML = `<div class="text-xs text-gray-400 text-center py-4 font-tajawal">جاري تحميل الفروع السحابية...</div>`;
+        if (!container || !window.BackendEngine) return [];
 
         try {
             const branches = await window.BackendEngine.adminLoadBranches();
-            if (branches.length === 0) {
-                container.innerHTML = `<div class="text-xs text-gray-500 text-center py-4 font-tajawal">لا توجد فروع مسجلة</div>`;
-                return;
+            if (!branches || branches.length === 0) {
+                container.innerHTML = `<div class="text-xs text-gray-500 text-center py-8 font-tajawal glass rounded-xl">لا توجد فروع مسجلة حالياً</div>`;
+                updateAdminStats([], []);
+                return [];
             }
 
             container.innerHTML = branches.map(b => {
                 const isFrozen = b.status === 'frozen';
                 return `
-                    <div class="glass p-3 flex items-center justify-between gap-3 text-xs font-tajawal">
+                    <div class="glass p-3.5 flex items-center justify-between gap-3 text-xs font-tajawal hover:border-cyan-400/40 transition-colors">
                         <div>
                             <div class="font-bold text-white flex items-center gap-2">
-                                <span>${escapeHtml(b.name)}</span>
+                                <span class="text-sm font-black">${escapeHtml(b.name)}</span>
                                 <span class="badge ${isFrozen ? 'badge-expired' : 'badge-live'} text-[9px]">
                                     ${isFrozen ? 'مجمد ❄️' : 'نشط ●'}
                                 </span>
                             </div>
-                            <div class="text-[10px] text-cyan-400 font-mono mt-0.5">user: ${escapeHtml(b.username)}</div>
+                            <div class="text-[10px] text-cyan-400 font-mono mt-0.5 flex items-center gap-2">
+                                <span>user: <b>${escapeHtml(b.username)}</b></span>
+                                <span class="text-gray-500">|</span>
+                                <span class="text-gray-400">${b.createdAt ? b.createdAt.slice(0, 10) : 'مسجل'}</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5">
-                            <button class="btn btn-ghost py-1 px-2.5 text-[10px] ${isFrozen ? 'text-emerald-400 border-emerald-500/40' : 'text-yellow-400 border-yellow-500/40'}"
+                        <div class="flex items-center gap-2">
+                            <button class="btn btn-ghost py-1.5 px-3 text-[11px] ${isFrozen ? 'text-emerald-400 border-emerald-500/40' : 'text-yellow-400 border-yellow-500/40'}"
+                                    data-action="branch-freeze"
+                                    data-id="${b.id}"
+                                    data-status="${b.status || 'active'}"
                                     title="${isFrozen ? 'إلغاء التجميد' : 'تجميد الفرع'}"
                                     onclick="window.SecurityEngine.toggleBranchFreeze('${b.id}', '${b.status}')">
                                 ${isFrozen ? '▶ تفعيل' : '❄️ تجميد'}
                             </button>
-                            <button class="btn btn-danger py-1 px-2.5 text-[10px]"
+                            <button class="btn btn-danger py-1.5 px-3 text-[11px]"
+                                    data-action="branch-delete"
+                                    data-id="${b.id}"
+                                    data-name="${escapeHtml(b.name)}"
                                     title="حذف الفرع وبياناته نهائياً"
                                     onclick="window.SecurityEngine.handleDeleteBranch('${b.id}', '${escapeHtml(b.name)}')">
                                 🗑️ حذف
@@ -229,48 +251,52 @@
                     </div>
                 `;
             }).join('');
+
+            return branches;
         } catch (e) {
             container.innerHTML = `<div class="text-xs text-red-400 text-center py-2 font-tajawal">تعذر جلب الفروع</div>`;
+            return [];
         }
     }
 
     // Render Audit Logs
     async function renderAdminAuditLogs() {
         const container = document.getElementById('admin-audit-logs');
-        if (!container || !window.BackendEngine) return;
-
-        container.innerHTML = `<div class="text-[10px] text-gray-400 text-center py-3 font-tajawal">جاري تحميل سجل المراقبة...</div>`;
+        if (!container || !window.BackendEngine) return [];
 
         try {
             const logs = await window.BackendEngine.adminLoadAuditLogs();
-            if (logs.length === 0) {
-                container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-3 font-tajawal">لا توجد سجلات بعد</div>`;
-                return;
+            if (!logs || logs.length === 0) {
+                container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6 font-tajawal glass rounded-xl">لا توجد سجلات بعد</div>`;
+                return [];
             }
 
             container.innerHTML = logs.map(l => {
                 const time = l.timestamp ? new Date(l.timestamp).toLocaleTimeString('en-GB') : '--:--:--';
                 const date = l.timestamp ? new Date(l.timestamp).toISOString().slice(0, 10) : '';
                 return `
-                    <div class="p-2 rounded bg-black/40 border border-white/5 flex items-start justify-between gap-2">
+                    <div class="p-2.5 rounded-xl bg-black/40 border border-white/5 flex items-start justify-between gap-3 text-xs hover:border-cyan-500/30 transition-colors">
                         <div>
-                            <span class="text-cyan-400 font-bold">[${escapeHtml(l.action)}]</span>
-                            <span class="text-gray-300 ml-1 font-tajawal">${escapeHtml(l.details || '')}</span>
-                            <span class="text-fuchsia-400 block text-[9px]">الفرع: ${escapeHtml(l.branchName || 'النظام')} (${escapeHtml(l.branchUser || '-')})</span>
+                            <span class="text-cyan-400 font-bold font-mono">[${escapeHtml(l.action)}]</span>
+                            <span class="text-gray-200 ml-1.5 font-tajawal">${escapeHtml(l.details || '')}</span>
+                            <span class="text-fuchsia-400 block text-[10px] mt-0.5 font-mono">الفرع: ${escapeHtml(l.branchName || 'النظام')} (${escapeHtml(l.branchUser || '-')})</span>
                         </div>
-                        <div class="text-right text-[9px] text-gray-500 whitespace-nowrap font-mono">
+                        <div class="text-right text-[10px] text-gray-500 whitespace-nowrap font-mono">
                             <div>${time}</div>
-                            <div>${date}</div>
+                            <div class="text-[9px] text-gray-600">${date}</div>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            return logs;
         } catch (e) {
             container.innerHTML = `<div class="text-[10px] text-red-400 text-center py-2 font-tajawal">تعذر جلب سجلات المراقبة</div>`;
+            return [];
         }
     }
 
-    // Create New Branch Handler
+    // Create New Branch Handler (With Instant Real-Time Propagation)
     async function handleAdminCreateBranch() {
         const nameEl = document.getElementById('admin-new-branch-name');
         const userEl = document.getElementById('admin-new-branch-user');
@@ -286,21 +312,24 @@
         }
 
         try {
-            await window.BackendEngine.adminCreateBranch(name, user, pass);
+            const newBranch = await window.BackendEngine.adminCreateBranch(name, user, pass);
             nameEl.value = '';
             userEl.value = '';
             passEl.value = '';
+
+            // Instant Real-Time Propagation across the site
+            await refreshAdminData();
+            window.dispatchEvent(new CustomEvent('nexus:branches-updated', { detail: { action: 'create', branch: newBranch } }));
+
             if (window.DialogEngine) {
-                await window.DialogEngine.alert(`تم إنشاء وتفعيل الفرع بنجاح:\nالاسم: ${name}\nالمستخدم: ${user}\nالبيانات معزولة في وثيقة سحابية مستقلة.`, 'نجاح الإنشاء');
+                await window.DialogEngine.alert(`تم إنشاء وتفعيل الفرع بنجاح:\nالاسم: ${name}\nالمستخدم: ${user}\nالبيانات معزولة سحابياً بشكل فوري ومستقل.`, 'نجاح الإنشاء');
             }
-            await renderAdminBranches();
-            await renderAdminAuditLogs();
         } catch (err) {
             if (window.DialogEngine) window.DialogEngine.alert(err.message, 'خطأ في الإنشاء');
         }
     }
 
-    // Delete Branch Handler (With Confirmation)
+    // Delete Branch Handler (With Instant Real-Time Propagation)
     async function handleDeleteBranch(branchId, branchName) {
         if (!window.DialogEngine || !window.BackendEngine) return;
 
@@ -313,24 +342,47 @@
 
         try {
             await window.BackendEngine.adminDeleteBranch(branchId);
-            await renderAdminBranches();
-            await renderAdminAuditLogs();
+            
+            // Instant Real-Time Propagation across the site
+            await refreshAdminData();
+            window.dispatchEvent(new CustomEvent('nexus:branches-updated', { detail: { action: 'delete', branchId } }));
+
             window.DialogEngine.alert(`تم حذف فرع "${branchName}" وكافة بياناته المعزولة بنجاح.`, 'تأكيد الحذف');
         } catch (err) {
             window.DialogEngine.alert(err.message, 'خطأ في الحذف');
         }
     }
 
-    // Toggle Freeze on Branch
+    // Toggle Freeze on Branch (With Instant Real-Time Propagation)
     async function toggleBranchFreeze(branchId, currentStatus) {
         if (!window.BackendEngine) return;
         try {
-            await window.BackendEngine.adminToggleBranchStatus(branchId, currentStatus);
-            await renderAdminBranches();
-            await renderAdminAuditLogs();
+            const newStatus = await window.BackendEngine.adminToggleBranchStatus(branchId, currentStatus);
+            
+            // Instant Real-Time Propagation across the site
+            await refreshAdminData();
+            window.dispatchEvent(new CustomEvent('nexus:branches-updated', { detail: { action: 'freeze', branchId, status: newStatus } }));
+
+            // If current tenant was frozen, enforce immediate UI lockdown
+            const currentTenant = window.BackendEngine.getCurrentTenant();
+            if (currentTenant && currentTenant.id === branchId && newStatus === 'frozen') {
+                triggerKillSwitchUI('تم تجميد هذا الفرع بأمر إداري مركزي. يرجى مراجعة الإدارة العامة.');
+            }
         } catch (e) {
             console.error('Failed to toggle branch status:', e);
         }
+    }
+
+    async function clearAuditLogs() {
+        if (!window.DialogEngine || !window.BackendEngine) return;
+        const ok = await window.DialogEngine.confirm('هل أنت متأكد من مسح جميع سجلات المراقبة؟', 'مسح السجلات');
+        if (!ok) return;
+
+        try {
+            localStorage.removeItem('qx716_local_audit_logs');
+            await refreshAdminData();
+            if (window.DialogEngine) window.DialogEngine.alert('تم مسح السجلات بنجاح.', 'مسح السجلات');
+        } catch (e) {}
     }
 
     function escapeHtml(s) {
@@ -339,16 +391,26 @@
         })[m]);
     }
 
+    // Global Real-Time Listener for Cross-Component & Cross-Tab Admin Sync
+    window.addEventListener('nexus:branches-updated', () => {
+        refreshAdminData();
+    });
+    window.addEventListener('nexus:audit-logs-updated', () => {
+        renderAdminAuditLogs();
+    });
+
     // Public Security API
     window.SecurityEngine = {
         dismissWarning,
         triggerKillSwitchUI,
         promptAdminPassword,
         openMasterAdminPanel,
+        refreshAdminData,
         renderAdminBranches,
         renderAdminAuditLogs,
         handleAdminCreateBranch,
         handleDeleteBranch,
-        toggleBranchFreeze
+        toggleBranchFreeze,
+        clearAuditLogs
     };
 })();

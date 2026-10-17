@@ -130,6 +130,64 @@
         }
     }
 
+    // Real-Time Branch & Audit Log Observers
+    let branchesUnsubscribe = null;
+    let auditLogsUnsubscribe = null;
+    let realtimeBus = null;
+
+    try {
+        if (typeof BroadcastChannel !== 'undefined') {
+            realtimeBus = new BroadcastChannel('nexus_realtime_bus');
+            realtimeBus.onmessage = e => {
+                if (!e || !e.data) return;
+                if (e.data.type === 'branches_updated') {
+                    window.dispatchEvent(new CustomEvent('nexus:branches-updated'));
+                } else if (e.data.type === 'audit_logs_updated') {
+                    window.dispatchEvent(new CustomEvent('nexus:audit-logs-updated'));
+                }
+            };
+        }
+    } catch (e) {}
+
+    function broadcastEvent(type, payload = {}) {
+        try {
+            window.dispatchEvent(new CustomEvent(`nexus:${type}`, { detail: payload }));
+            if (realtimeBus) {
+                realtimeBus.postMessage({ type, payload });
+            }
+        } catch (e) {}
+    }
+
+    function bindRemoteBranchesListener() {
+        if (!fbReady || !fbDb) return;
+        try {
+            if (branchesUnsubscribe) branchesUnsubscribe();
+            branchesUnsubscribe = fbDb.collection(COLL_BRANCHES).onSnapshot(snap => {
+                if (!snap || snap.empty) return;
+                const branches = snap.docs.map(d => d.data());
+                try {
+                    localStorage.setItem('qx716_local_branches', JSON.stringify(branches));
+                } catch (e) {}
+                broadcastEvent('branches-updated', { branches });
+            }, () => {});
+        } catch (e) {}
+    }
+
+    function bindRemoteAuditLogsListener() {
+        if (!fbReady || !fbDb) return;
+        try {
+            if (auditLogsUnsubscribe) auditLogsUnsubscribe();
+            auditLogsUnsubscribe = fbDb.collection(COLL_AUDIT_LOGS).orderBy('epoch', 'desc').limit(45).onSnapshot(snap => {
+                if (!snap || snap.empty) return;
+                const logs = snap.docs.map(d => d.data());
+                try {
+                    localStorage.setItem('qx716_local_audit_logs', JSON.stringify(logs));
+                } catch (e) {}
+                broadcastEvent('audit-logs-updated', { logs });
+            }, () => {});
+        } catch (e) {}
+    }
+
     // Audit Log Pipeline
     async function logAuditEvent(action, details) {
         const logEntry = {
@@ -475,6 +533,7 @@
         } catch (e) {}
 
         await logAuditEvent('BRANCH_CREATED', `إنشاء فرع جديد: ${cleanName}`);
+        broadcastEvent('branches-updated', { action: 'created', branch: branchData });
         return branchData;
     }
 
@@ -495,6 +554,7 @@
 
         localStorage.removeItem(`qx716_nexus_data_${branchId}`);
         await logAuditEvent('BRANCH_DELETED', `حذف فرع ID: ${branchId}`);
+        broadcastEvent('branches-updated', { action: 'deleted', branchId });
         return true;
     }
 
@@ -516,6 +576,7 @@
         } catch (e) {}
 
         await logAuditEvent('BRANCH_STATUS_CHANGE', `تغيير حالة فرع ${branchId} إلى: ${newStatus}`);
+        broadcastEvent('branches-updated', { action: 'freeze_toggle', branchId, status: newStatus });
         return newStatus;
     }
 
@@ -541,6 +602,8 @@
             await ensureAuth();
             await seedDefaultBranchesIfNeeded();
             bindRemoteKillSwitch();
+            bindRemoteBranchesListener();
+            bindRemoteAuditLogsListener();
 
             const cached = localStorage.getItem(SESSION_BRANCH_KEY);
             if (cached) {

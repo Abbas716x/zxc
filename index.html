@@ -27,6 +27,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
 
+    <!-- React 18 & Recharts Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
+
     <!-- Master Architecture Stylesheet -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -164,6 +169,9 @@
             <button class="nav-item" data-view="debts" onclick="window.switchView('debts')">
                 <span class="nav-icon">📒</span><span class="flex-1 text-right">دفتر الديون الذكي</span>
             </button>
+            <button class="nav-item text-yellow-300 border border-yellow-500/25 hover:border-yellow-400 bg-yellow-500/5" data-view="admin-master" onclick="window.switchView('admin-master')">
+                <span class="nav-icon">👑</span><span class="flex-1 text-right font-black">لوحة المدير العام</span>
+            </button>
         </nav>
 
         <div class="mt-6 pt-5 border-t border-white/10 flex flex-col gap-2">
@@ -215,6 +223,61 @@
                 <button class="btn btn-ghost" onclick="window.AppEngine && window.AppEngine.resetMonthly()">⌬ تصفير الشهر</button>
                 <button class="btn btn-ghost" onclick="window.AppEngine && window.AppEngine.resetDaily()">↻ تصفير مبيعات اليوم</button>
                 <button class="btn btn-ghost" onclick="window.manualSave && window.manualSave(true)">💾 مزامنة السحابة</button>
+            </div>
+
+            <!-- Recharts Sales Movement Analytics Section -->
+            <div class="glass p-6 md:p-8 mb-8" id="dashboard-analytics-section">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-cyan-500/20">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="stat-tag text-cyan-400 border-cyan-400">◆ ANALYTICS ENGINE</span>
+                            <span class="badge badge-live font-mono text-[10px]">RECHARTS v2 POWERED</span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-black text-white mt-2 font-tajawal flex items-center gap-2">
+                            <span>📈 حركة المبيعات اليومية والشهرية</span>
+                        </h3>
+                        <p class="text-gray-400 text-xs mt-1 font-tajawal">
+                            تحليل بياني وتفاعلي لحركة الإيرادات وساعات الذروة لمساعدة أصحاب الصالات في تحليل الأداء بدقة
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <div class="flex bg-black/40 p-1 rounded-xl border border-white/10" id="chart-period-tabs">
+                            <button class="btn btn-ghost py-1.5 px-3 text-xs active-chart-tab" data-tab="daily" onclick="window.setSalesChartTab && window.setSalesChartTab('daily')">اليومي (ساعات اليوم)</button>
+                            <button class="btn btn-ghost py-1.5 px-3 text-xs" data-tab="weekly" onclick="window.setSalesChartTab && window.setSalesChartTab('weekly')">الأسبوعي (آخر 7 أيام)</button>
+                            <button class="btn btn-ghost py-1.5 px-3 text-xs" data-tab="monthly" onclick="window.setSalesChartTab && window.setSalesChartTab('monthly')">الشهري (أيام الشهر)</button>
+                        </div>
+                        <button class="btn btn-ghost py-1.5 px-3 text-xs text-cyan-400 border-cyan-400/30" onclick="window.renderSalesCharts && window.renderSalesCharts()" title="تحديث الرسم البياني">
+                            ⟳
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Analytic Metrics -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <div class="p-3.5 rounded-xl bg-black/30 border border-white/5">
+                        <div class="text-[10px] font-mono text-gray-400 mb-1">أعلى ساعة مبيعاً:</div>
+                        <div id="chart-peak-hour" class="text-sm font-black text-cyan-300 font-mono">—</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-black/30 border border-white/5">
+                        <div class="text-[10px] font-mono text-gray-400 mb-1">متوسط الفاتورة:</div>
+                        <div id="chart-avg-ticket" class="text-sm font-black text-emerald-400 font-mono">0 IQD</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-black/30 border border-white/5">
+                        <div class="text-[10px] font-mono text-gray-400 mb-1">إجمالي الفواتير:</div>
+                        <div id="chart-invoices-count" class="text-sm font-black text-fuchsia-400 font-mono">0</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-black/30 border border-white/5">
+                        <div class="text-[10px] font-mono text-gray-400 mb-1">إجمالي الإيراد للفترة:</div>
+                        <div id="chart-total-period-rev" class="text-sm font-black text-yellow-400 font-mono">0 IQD</div>
+                    </div>
+                </div>
+
+                <!-- Recharts React Mount Container -->
+                <div id="recharts-sales-container" style="min-height: 320px; width: 100%; position: relative;">
+                    <div class="flex items-center justify-center h-64 text-gray-500 font-tajawal text-sm">
+                        جاري تحميل وتوليد الرسم البياني Recharts...
+                    </div>
+                </div>
             </div>
 
             <h3 class="text-lg font-black text-white mb-4 font-tajawal">اختصارات الوصول السريع</h3>
@@ -383,6 +446,142 @@
                 </div>
             </div>
         </section>
+
+        <!-- VIEW: Full-Page Master Admin Dashboard -->
+        <section id="admin-master-view" class="view">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <span class="stat-tag text-yellow-400 border-yellow-400">◆ MODULE.ADMIN</span>
+                        <span class="badge badge-expired font-mono text-xs">STEALTH MASTER CONTROL</span>
+                    </div>
+                    <h2 class="text-3xl md:text-5xl font-black text-white mt-3 font-orbitron" style="text-shadow:0 0 30px rgba(255,215,0,.3)">
+                        لوحة الإشراف المركزية للمدير العام
+                    </h2>
+                    <p class="text-gray-400 text-sm mt-2 font-tajawal">
+                        إدارة مركزية كاملة للفروع، عزل البيانات، التحكم بحالات التجميد، ومتابعة سجلات المراقبة الحية (Audit Logs)
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="btn btn-ghost text-xs py-2.5 px-4" onclick="window.switchView('dashboard')">
+                        ← العودة للرئيسية
+                    </button>
+                    <button class="btn btn-primary text-xs py-2.5 px-4" onclick="window.SecurityEngine && window.SecurityEngine.refreshAdminData()">
+                        ⟳ تحديث حي
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Stats Cards for Admin -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+                <div class="stat-card stat-cyan">
+                    <span class="stat-tag">BRANCHES.TOTAL</span>
+                    <div class="stat-num" id="admin-stat-total-branches">0</div>
+                    <div class="flex items-center justify-between mt-3 font-mono">
+                        <span class="stat-unit">TENANTS</span>
+                        <span class="stat-unit text-cyan-400">REGISTERED</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-emerald">
+                    <span class="stat-tag">BRANCHES.ONLINE</span>
+                    <div class="stat-num" id="admin-stat-active-branches">0</div>
+                    <div class="flex items-center justify-between mt-3 font-mono">
+                        <span class="stat-unit">STATUS</span>
+                        <span class="stat-unit text-emerald-400">● ACTIVE</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-pink">
+                    <span class="stat-tag">BRANCHES.FROZEN</span>
+                    <div class="stat-num" id="admin-stat-frozen-branches">0</div>
+                    <div class="flex items-center justify-between mt-3 font-mono">
+                        <span class="stat-unit">LOCKED</span>
+                        <span class="stat-unit text-pink-500">❄️ FROZEN</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-violet">
+                    <span class="stat-tag">AUDIT.EVENTS</span>
+                    <div class="stat-num" id="admin-stat-total-logs">0</div>
+                    <div class="flex items-center justify-between mt-3 font-mono">
+                        <span class="stat-unit">LOGS</span>
+                        <span class="stat-unit text-fuchsia-400">LIVE TIMELINE</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Admin Controls Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-8">
+                <!-- Create Branch Form (5 cols) -->
+                <div class="lg:col-span-5 glass p-6 md:p-8">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-cyan-500/20">
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-2xl text-cyan-400 shadow-lg">
+                            🏢
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-white font-tajawal">إنشاء فرع جديد</h3>
+                            <p class="text-gray-400 text-xs font-mono mt-0.5">ISOLATED TENANT CLOUD INSTANCE</p>
+                        </div>
+                    </div>
+
+                    <form id="admin-create-branch-form" onsubmit="event.preventDefault(); window.SecurityEngine && window.SecurityEngine.handleAdminCreateBranch();">
+                        <label class="lbl">اسم الفرع التجاري</label>
+                        <input type="text" id="admin-new-branch-name" class="inp mb-4 font-bold" placeholder="مثال: فرع الكرادة / VIP Lounge" required>
+
+                        <label class="lbl">اسم المستخدم (للدخول المخصص)</label>
+                        <input type="text" id="admin-new-branch-user" class="inp mb-4 font-mono font-bold" placeholder="مثال: karrada_branch" required>
+
+                        <label class="lbl">كلمة مرور الفرع</label>
+                        <input type="password" id="admin-new-branch-pass" class="inp mb-6 font-mono" placeholder="••••••••" required>
+
+                        <button type="submit" class="btn btn-success w-full py-3.5 text-sm font-bold shadow-lg shadow-emerald-500/30">
+                            ✓ حفظ وتفعيل الفرع السحابي
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Branches Management List (7 cols) -->
+                <div class="lg:col-span-7 glass p-6 md:p-8 flex flex-col">
+                    <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-cyan-500/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-400/40 flex items-center justify-center text-2xl text-fuchsia-400 shadow-lg">
+                                📊
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-black text-white font-tajawal">إدارة ومراقبة الفروع</h3>
+                                <p class="text-gray-400 text-xs font-mono mt-0.5">ACTIVE & SUSPENDED TENANTS</p>
+                            </div>
+                        </div>
+                        <span id="admin-branch-count-badge" class="badge badge-live">0 فرع مسجل</span>
+                    </div>
+
+                    <div id="admin-branches-list" class="space-y-3 overflow-y-auto max-h-[460px] no-scrollbar pr-1 flex-1">
+                        <!-- Dynamically populated branches -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Audit Logs Full Panel -->
+            <div class="glass p-6 md:p-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-cyan-500/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-400/40 flex items-center justify-center text-2xl text-emerald-400 shadow-lg">
+                            📜
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-black text-white font-tajawal">سجل حركة الدخول والعمليات الحية (Live Audit Logs)</h3>
+                            <p class="text-gray-400 text-xs font-mono mt-0.5">SECURE TIMELINE & EVENT DISPATCH</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="btn btn-ghost text-xs py-2 px-3" onclick="window.SecurityEngine && window.SecurityEngine.clearAuditLogs && window.SecurityEngine.clearAuditLogs()">
+                            🗑 مسح السجلات
+                        </button>
+                    </div>
+                </div>
+                <div id="admin-audit-logs" class="space-y-2 max-h-96 overflow-y-auto no-scrollbar font-mono text-xs pr-1">
+                    <!-- Dynamically populated audit logs -->
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- ==================== INTERNAL GLASS DIALOGS ==================== -->
@@ -438,40 +637,6 @@
                 <input type="password" id="login-branch-pass" class="inp mb-6 font-mono" placeholder="••••••••" required>
                 <button type="submit" class="btn btn-primary w-full py-3.5 text-base">دخول للفرع الآن</button>
             </form>
-        </div>
-    </div>
-
-    <!-- Stealth Master Admin Control Modal -->
-    <div id="modal-stealth-admin" class="modal-bd" style="z-index: 1100;">
-        <div class="glass-menu p-7 max-w-3xl w-full max-h-[90vh] overflow-y-auto relative no-scrollbar">
-            <button onclick="window.closeModal('modal-stealth-admin')" class="absolute top-4 left-4 w-9 h-9 rounded-xl bg-white/5 border border-white/10 text-white flex items-center justify-center hover:bg-white/10 transition-colors">✕</button>
-            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-cyan-500/20">
-                <div class="text-3xl">👑</div>
-                <div>
-                    <span class="badge badge-expired">STEALTH MASTER CONTROL</span>
-                    <h3 class="text-2xl font-black text-white font-orbitron mt-1">لوحة الإشراف المركزية للمدير العام</h3>
-                </div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass p-5">
-                    <h4 class="font-bold text-white mb-3 text-sm flex items-center gap-2 font-tajawal"><span class="text-cyan-400">+</span> إنشاء فرع جديد (عزل تام)</h4>
-                    <label class="lbl">اسم الفرع</label>
-                    <input type="text" id="admin-new-branch-name" class="inp mb-3" placeholder="مثال: فرع البصرة">
-                    <label class="lbl">اسم المستخدم</label>
-                    <input type="text" id="admin-new-branch-user" class="inp mb-3" placeholder="user_basra">
-                    <label class="lbl">كلمة المرور</label>
-                    <input type="password" id="admin-new-branch-pass" class="inp mb-4 font-mono" placeholder="••••••">
-                    <button class="btn btn-success w-full py-2.5 text-xs font-bold" onclick="window.SecurityEngine && window.SecurityEngine.handleAdminCreateBranch()">✓ حفظ وتفعيل الفرع</button>
-                </div>
-                <div class="glass p-5">
-                    <h4 class="font-bold text-white mb-3 text-sm flex items-center gap-2 font-tajawal"><span class="text-fuchsia-400">📊</span> نظرة على الفروع</h4>
-                    <div id="admin-branches-list" class="space-y-2 max-h-52 overflow-y-auto no-scrollbar font-tajawal"></div>
-                </div>
-            </div>
-            <div class="mt-6 glass p-5">
-                <h4 class="font-bold text-white mb-3 text-sm flex items-center gap-2 font-tajawal"><span class="text-emerald-400">📜</span> سجل حركة الدخول (Audit Logs)</h4>
-                <div id="admin-audit-logs" class="space-y-1.5 max-h-48 overflow-y-auto no-scrollbar font-mono text-xs"></div>
-            </div>
         </div>
     </div>
 
