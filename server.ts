@@ -166,6 +166,17 @@ async function startServer() {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
+  // Cross-Origin & Iframe Compatibility Headers
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Helper auth check for Admin routes
   function requireAdmin(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
@@ -178,8 +189,8 @@ async function startServer() {
     return res.status(401).json({ error: 'صلاحية غير مصرح بها. يرجى تسجيل الدخول كمسؤول.' });
   }
 
-  // 1. Admin Authentication API
-  app.post('/api/auth/admin-login', (req: Request, res: Response) => {
+  // 1. Admin Authentication API (Handles both /api/auth/admin-login and /api/admin/login)
+  const handleAdminAuth = (req: Request, res: Response) => {
     const { username, password } = req.body;
     if (username === ADMIN_USER && password === ADMIN_PASS) {
       const store = loadStore();
@@ -226,7 +237,10 @@ async function startServer() {
     saveStore(store);
 
     return res.status(401).json({ error: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
-  });
+  };
+
+  app.post('/api/auth/admin-login', handleAdminAuth);
+  app.post('/api/admin/login', handleAdminAuth);
 
   // 2. Admin Branch Management APIs
   app.get('/api/admin/branches', requireAdmin, (req: Request, res: Response) => {
@@ -458,6 +472,16 @@ async function startServer() {
     const cleanUser = String(username || '').trim().toLowerCase();
     const cleanPass = String(password || '').trim();
 
+    // If super admin credentials entered in branch login modal, guide to adminx.html
+    if (cleanUser === ADMIN_USER.toLowerCase() && cleanPass === ADMIN_PASS) {
+      return res.status(200).json({
+        ok: true,
+        isAdmin: true,
+        redirect: '/adminx.html',
+        message: 'تم التعرف على بيانات المدير العام. جار التوجيه إلى لوحة الإدارة adminx.html...',
+      });
+    }
+
     const store = loadStore();
     const branch = store.branches.find(
       b => b.username.toLowerCase() === cleanUser && b.password === cleanPass
@@ -641,6 +665,16 @@ async function startServer() {
       return res.sendFile(adminPath);
     }
     return res.sendFile(path.join(__dirname, 'public', 'adminx.html'));
+  });
+
+  // Friendly short URLs for Admin
+  app.get(['/adminx', '/admin'], (req: Request, res: Response) => {
+    return res.redirect('/adminx.html');
+  });
+
+  // Prevent API requests from ever falling through to HTML index
+  app.all('/api/*', (req: Request, res: Response) => {
+    res.status(404).json({ error: `المسار البرمجي غير موجود: ${req.method} ${req.path}` });
   });
 
   // Mount Vite or Static files depending on environment

@@ -115,7 +115,19 @@
                 body: JSON.stringify({ username: cleanUser, password: cleanPass })
             });
 
-            const data = await res.json();
+            const rawText = await res.text();
+            let data = null;
+            try {
+                data = JSON.parse(rawText);
+            } catch (e) {
+                console.warn('Non-JSON response in branch login:', rawText.slice(0, 80));
+                throw new Error('تعذر الاتصال بالخادم المركزي. يرجى إعادة المحاولة.');
+            }
+
+            if (data && data.isAdmin && data.redirect) {
+                window.location.href = data.redirect;
+                return { name: 'المدير العام', isAdmin: true };
+            }
 
             if (!res.ok) {
                 if (data.status === 'deactivated') {

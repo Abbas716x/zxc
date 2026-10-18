@@ -111,6 +111,54 @@
   },
   "auditLogs": [
     {
+      "id": "LOG_mvd3dmpo",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "3BS",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:33:17.628Z",
+      "epoch": 1792283597628,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvd3dmp6",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "3BS",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:33:17.611Z",
+      "epoch": 1792283597611,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvd39fqg",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "3BS",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:30:01.960Z",
+      "epoch": 1792283401960,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvd38p6d",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "3BS",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:29:27.542Z",
+      "epoch": 1792283367542,
+      "severity": "normal"
+    },
+    {
       "id": "LOG_mvd2zwhk",
       "branchId": "branch_mohammed",
       "branchName": "محمد",
