@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X00716 NEXUS — لوحة الإدارة المركزية (Master Admin)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Tajawal:wght@400;500;700;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-primary: #050714;
+            --accent-cyan: #00FFFF;
+            --accent-violet: #C026D3;
+            --accent-pink: #FF0080;
+            --accent-emerald: #00FF88;
+            --accent-amber: #FFD700;
+            --accent-rose: #FF0055;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            background: #050714;
+            color: #ffffff;
+            font-family: 'Tajawal', sans-serif;
+            overflow-x: hidden;
+            overflow-y: auto;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        /* Glassmorphic Cyber Panels */
+        .glass-panel {
+            background: rgba(15, 20, 42, 0.55);
+            backdrop-filter: blur(20px) saturate(190%);
+            -webkit-backdrop-filter: blur(20px) saturate(190%);
+            border: 1px solid rgba(0, 240, 255, 0.22);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+        }
+
+        .glass-card {
+            background: rgba(18, 24, 52, 0.5);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            transition: all 0.25s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 240, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: none;
+            outline: none;
+        }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, #00FFFF, #0088FF);
+            color: #050714;
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.35);
+        }
+        .btn-cyan:hover {
+            box-shadow: 0 6px 28px rgba(0, 255, 255, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-emerald {
+            background: linear-gradient(135deg, #00FF88, #00AA55);
+            color: #050714;
+            box-shadow: 0 4px 20px rgba(0, 255, 136, 0.35);
+        }
+        .btn-emerald:hover {
+            box-shadow: 0 6px 28px rgba(0, 255, 136, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #FF0055, #C00030);
+            color: #ffffff;
+            box-shadow: 0 4px 20px rgba(255, 0, 85, 0.35);
+        }
+        .btn-danger:hover {
+            box-shadow: 0 6px 28px rgba(255, 0, 85, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+        .btn-ghost:hover {
+            background: rgba(0, 240, 255, 0.12);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .inp {
+            width: 100%;
+            background: rgba(10, 15, 35, 0.7);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: #ffffff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.25s;
+        }
+        .inp:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            background: rgba(14, 20, 48, 0.85);
+        }
+
+        .tab-btn {
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.25s;
+            border: 1px solid transparent;
+            color: #a0a0c0;
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(192, 38, 211, 0.2));
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.25);
+        }
+
+        /* Ambient Glow & Grid */
+        .ambient-glow {
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.18;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .font-orbitron { font-family: 'Orbitron', monospace; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="relative">
+
+    <!-- Ambient background lights -->
+    <div class="ambient-glow bg-cyan-500 top-[-100px] right-[-100px]"></div>
+    <div class="ambient-glow bg-fuchsia-600 bottom-[-100px] left-[-100px]"></div>
+
+    <!-- Toast Notification Dispatcher -->
+    <div id="toast-wrap" class="fixed top-5 left-5 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- 1. LOGIN GATE: Authentication Modal/Screen -->
+    <!-- ========================================== -->
+    <div id="admin-login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050714]/90 backdrop-blur-xl">
+        <div class="glass-panel p-8 md:p-10 max-w-md w-full relative overflow-hidden border border-cyan-400/30">
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-400 via-fuchsia-500 to-cyan-400"></div>
+            
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-400 to-fuchsia-600 flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-cyan-500/30">
+                    👑
+                </div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-wider text-white font-orbitron">
+                    X00716 <span class="text-cyan-400">ADMIN</span>
+                </h1>
+                <p class="text-xs text-gray-400 mt-2 font-tajawal">بوابة الدخول الأمنية المشفرة للمدير العام (Master Admin)</p>
+            </div>
+
+            <form id="admin-login-form" onsubmit="event.preventDefault(); handleAdminLogin();" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-2">اسم المستخدم الإداري</label>
+                    <input type="text" id="login-username" class="inp font-mono" placeholder="اسم المستخدم" required autocomplete="username">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-2">كلمة المرور المشفرة</label>
+                    <input type="password" id="login-password" class="inp font-mono" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+
+                <div id="login-error-msg" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/30 p-3 rounded-xl text-center"></div>
+
+                <button type="submit" id="login-submit-btn" class="btn btn-cyan w-full py-3.5 text-sm font-black tracking-wide shadow-lg">
+                    🔒 دخول آمن إلى لوحة التحكم
+                </button>
+            </form>
+
+            <div class="mt-8 pt-4 border-t border-white/10 text-center">
+                <span class="text-[11px] text-gray-500 font-mono">ENCRYPTED NEXUS RUNTIME — SHA256 PROTECTED</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. MASTER ADMIN DASHBOARD (Post-Login)     -->
+    <!-- ========================================== -->
+    <div id="admin-dashboard-screen" class="hidden min-h-screen relative z-10 flex flex-col">
+        <!-- Master Navigation Header -->
+        <header class="border-b border-cyan-500/20 bg-[#080d24]/80 backdrop-blur-md sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-fuchsia-600 flex items-center justify-center text-xl font-black text-black">
+                        X
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-black text-white font-orbitron">X00716 NEXUS</h2>
+                            <span class="text-[10px] bg-cyan-400/20 text-cyan-300 border border-cyan-400/40 px-2 py-0.5 rounded-md font-mono">MASTER CORE</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 font-tajawal mt-0.5">لوحة التحكم المركزية والإشراف السحابي على الفروع</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-mono">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span id="admin-clock" class="text-cyan-300">--:--:--</span>
+                    </div>
+
+                    <div class="flex items-center gap-2 bg-cyan-500/10 border border-cyan-500/30 px-3 py-1.5 rounded-xl text-xs">
+                        <span class="text-gray-400">المسؤول:</span>
+                        <span class="text-cyan-400 font-black font-mono" id="admin-user-display">3BS</span>
+                    </div>
+
+                    <button onclick="handleAdminLogout()" class="btn btn-ghost text-xs text-rose-400 border-rose-500/30 hover:border-rose-400 hover:text-rose-300">
+                        🚪 خروج
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body Workspace -->
+        <main class="max-w-7xl mx-auto px-4 md:px-8 py-8 flex-1 w-full space-y-8">
+            <!-- Central Metrics Bar -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div class="glass-card p-5 border-cyan-500/30">
+                    <div class="text-[10px] font-mono text-cyan-400 tracking-wider mb-1">إجمالي الفروع</div>
+                    <div id="stat-total-branches" class="text-3xl font-black font-orbitron text-white">0</div>
+                    <div class="text-[10px] text-gray-400 mt-1 font-tajawal">فروع مسجلة بالنظام</div>
+                </div>
+
+                <div class="glass-card p-5 border-emerald-500/30">
+                    <div class="text-[10px] font-mono text-emerald-400 tracking-wider mb-1">الفروع النشطة</div>
+                    <div id="stat-active-branches" class="text-3xl font-black font-orbitron text-emerald-400">0</div>
+                    <div class="text-[10px] text-gray-400 mt-1 font-tajawal">تعمل بصورة طبيعية</div>
+                </div>
+
+                <div class="glass-card p-5 border-yellow-500/30">
+                    <div class="text-[10px] font-mono text-yellow-400 tracking-wider mb-1">الفروع المجمدة</div>
+                    <div id="stat-frozen-branches" class="text-3xl font-black font-orbitron text-yellow-400">0</div>
+                    <div class="text-[10px] text-gray-400 mt-1 font-tajawal">موقوفة مؤقتاً / أمنياً</div>
+                </div>
+
+                <div class="glass-card p-5 border-rose-500/30">
+                    <div class="text-[10px] font-mono text-rose-500 tracking-wider mb-1">الفروع المعطلة جذرياً</div>
+                    <div id="stat-deactivated-branches" class="text-3xl font-black font-orbitron text-rose-500">0</div>
+                    <div class="text-[10px] text-gray-400 mt-1 font-tajawal">حظر دائم بقرار الإدارة</div>
+                </div>
+
+                <div class="glass-card p-5 border-fuchsia-500/30 col-span-2 sm:col-span-1">
+                    <div class="text-[10px] font-mono text-fuchsia-400 tracking-wider mb-1">خروقات الفحص (DevTools)</div>
+                    <div id="stat-breaches-count" class="text-3xl font-black font-orbitron text-fuchsia-400">0</div>
+                    <div class="text-[10px] text-gray-400 mt-1 font-tajawal">محاولات فحص تم رصدها</div>
+                </div>
+            </div>
+
+            <!-- Navigation Sub-tabs -->
+            <div class="flex items-center gap-2 border-b border-white/10 pb-4 overflow-x-auto no-scrollbar">
+                <button class="tab-btn active" data-tab="tab-branches" onclick="switchAdminTab('tab-branches')">
+                    🏢 إدارة وحالة الفروع
+                </button>
+                <button class="tab-btn" data-tab="tab-history" onclick="switchAdminTab('tab-history')">
+                    ⏱️ سجل حركة الفروع وأوقات الفتح
+                </button>
+                <button class="tab-btn" data-tab="tab-breaches" onclick="switchAdminTab('tab-breaches')">
+                    🚨 سجل الخروقات والتجميد الأمني
+                </button>
+                <button class="tab-btn" data-tab="tab-logs" onclick="switchAdminTab('tab-logs')">
+                    📜 سجل الرقابة العامة (Audit Logs)
+                </button>
+                <button class="btn btn-ghost py-1.5 px-3 text-xs mr-auto text-cyan-400 border-cyan-400/40" onclick="loadAllAdminData()" title="تحديث البيانات">
+                    ⟳ تحديث حي
+                </button>
+            </div>
+
+            <!-- TAB 1: Branches Management & Actions -->
+            <section id="tab-branches" class="admin-tab-content space-y-8">
+                <!-- Add New Branch Form Card -->
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-cyan-500/20">
+                        <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-xl text-cyan-400">
+                            ➕
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-white font-tajawal">إضافة فرع جديد للنظام</h3>
+                            <p class="text-xs text-gray-400 font-mono mt-0.5">PROVISION NEW ISOLATED TENANT</p>
+                        </div>
+                    </div>
+
+                    <form id="add-branch-form" onsubmit="event.preventDefault(); handleCreateBranch();" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-2">اسم الفرع التجاري</label>
+                            <input type="text" id="new-branch-name" class="inp" placeholder="مثال: فرع المنصور / VIP" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-2">اسم المستخدم للدخول</label>
+                            <input type="text" id="new-branch-user" class="inp font-mono" placeholder="مثال: mansour_branch" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-2">كلمة المرور الخاصة بالفرع</label>
+                            <input type="password" id="new-branch-pass" class="inp font-mono" placeholder="••••••••" required>
+                        </div>
+
+                        <div class="md:col-span-3 flex justify-end mt-2">
+                            <button type="submit" class="btn btn-emerald py-3 px-8 text-sm font-black shadow-lg">
+                                ✓ حفظ وتفعيل الفرع السحابي
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Existing Branches Grid & Controls -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-black text-white flex items-center gap-2">
+                            <span>قائمة الفروع والتحكم الإداري المباشر</span>
+                            <span id="branches-badge-count" class="text-xs bg-cyan-400/20 text-cyan-300 px-2.5 py-0.5 rounded-full font-mono">0 فرع</span>
+                        </h3>
+                    </div>
+
+                    <div id="branches-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <!-- Populated by JavaScript -->
+                        <div class="p-8 text-center text-gray-500 font-tajawal glass-card col-span-2">
+                            جاري تحميل بيانات الفروع السحابية...
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: Branch Activity & Open History -->
+            <section id="tab-history" class="admin-tab-content hidden space-y-6">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-cyan-500/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-xl text-cyan-400">
+                                ⏱️
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-black text-white font-tajawal">متابعة حركة الفروع وتاريخ ووقت الفتح</h3>
+                                <p class="text-xs text-gray-400 font-mono mt-0.5">BRANCH ACCESS TIMELINE & LAST OPENED TIMESTAMPS</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="branch-activity-table" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: Breaches & Anti-Debug Incidents -->
+            <section id="tab-breaches" class="admin-tab-content hidden space-y-6">
+                <div class="glass-panel p-6 md:p-8 border-rose-500/30">
+                    <div class="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-rose-500/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-xl text-rose-500">
+                                🚨
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-black text-white font-tajawal">سجل الخروقات ومحاولات فحص الأكواد (DevTools Tamper)</h3>
+                                <p class="text-xs text-rose-300 font-mono mt-0.5">INSTANT FREEZE TRIGGERED EVENTS</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-300 font-tajawal mb-4 leading-relaxed">
+                        عند قيام أي مستخدم أو موظف بالضغط على (F12) أو محاولة فتح أدوات المطور (Inspect Element)، يقوم نظام الحماية المتقدم بتجميد الفرع فورياً وإيقافه عن العمل نهائياً. يمكنك هنا مراجعة الحادثة وفك التجميد بقرارك:
+                    </p>
+
+                    <div id="breaches-list-container" class="space-y-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: General Audit Trail -->
+            <section id="tab-logs" class="admin-tab-content hidden space-y-6">
+                <div class="glass-panel p-6 md:p-8">
+                    <div class="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-cyan-500/20">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-400/30 flex items-center justify-center text-xl text-emerald-400">
+                                📜
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-black text-white font-tajawal">سجل العمليات والرقابة العامة (Live Audit Trail)</h3>
+                                <p class="text-xs text-gray-400 font-mono mt-0.5">COMPREHENSIVE MULTI-TENANT AUDIT LOGS</p>
+                            </div>
+                        </div>
+                        <button onclick="handleClearLogs()" class="btn btn-ghost text-xs text-rose-400 border-rose-500/30">
+                            🗑️ مسح السجلات
+                        </button>
+                    </div>
+
+                    <div id="audit-logs-container" class="space-y-2 max-h-[500px] overflow-y-auto no-scrollbar font-mono text-xs pr-1">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- System Confirmation Modal -->
+    <div id="admin-confirm-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="glass-panel p-7 max-w-sm w-full text-center border-cyan-400/30">
+            <div id="confirm-icon" class="text-5xl mb-3">⚠️</div>
+            <h4 id="confirm-title" class="text-xl font-black text-white mb-2 font-tajawal">تأكيد الإجراء</h4>
+            <p id="confirm-msg" class="text-gray-300 text-sm mb-6 font-tajawal leading-relaxed"></p>
+            <div class="flex gap-3">
+                <button id="confirm-yes-btn" class="btn btn-danger flex-1 py-3 text-xs font-bold">تأكيد وتنفيذ</button>
+                <button onclick="closeConfirmModal()" class="btn btn-ghost flex-1 py-3 text-xs font-bold">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Logic -->
+    <script>
+        const AUTH_STORAGE_KEY = 'nx_admin_session_token';
+        let currentAdminToken = sessionStorage.getItem(AUTH_STORAGE_KEY) || '';
+        let cachedBranches = [];
+        let cachedLogs = [];
+
+        // Live Clock
+        setInterval(() => {
+            const el = document.getElementById('admin-clock');
+            if (el) {
+                const now = new Date();
+                el.textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            }
+        }, 1000);
+
+        function showToast(msg, type = 'info') {
+            const wrap = document.getElementById('toast-wrap');
+            if (!wrap) return;
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-500/90 text-white' : type === 'success' ? 'bg-emerald-500/90 text-black font-bold' : 'bg-cyan-500/90 text-black font-bold';
+            toast.className = `p-3.5 px-5 rounded-xl shadow-2xl text-xs backdrop-blur-md pointer-events-auto flex items-center gap-2 transform transition-all duration-300 ${bgClass}`;
+            toast.innerHTML = `<span>${type === 'error' ? '🚨' : type === 'success' ? '✓' : 'ℹ️'}</span><span>${msg}</span>`;
+            wrap.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-10px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Helper API Request with Bearer Token
+        async function apiRequest(endpoint, options = {}) {
+            options.headers = options.headers || {};
+            if (currentAdminToken) {
+                options.headers['Authorization'] = `Bearer ${currentAdminToken}`;
+            }
+            options.headers['Content-Type'] = 'application/json';
+
+            try {
+                const res = await fetch(endpoint, options);
+                if (res.status === 401) {
+                    handleAdminLogout();
+                    throw new Error('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً');
+                }
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'حدث خطأ في معالجة الطلب');
+                }
+                return data;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        // Admin Login
+        async function handleAdminLogin() {
+            const userInp = document.getElementById('login-username');
+            const passInp = document.getElementById('login-password');
+            const errBox = document.getElementById('login-error-msg');
+            const submitBtn = document.getElementById('login-submit-btn');
+
+            errBox.classList.add('hidden');
+            const username = userInp.value.trim();
+            const password = passInp.value.trim();
+
+            if (!username || !password) {
+                errBox.textContent = 'يرجى إدخال اسم المستخدم وكلمة المرور';
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'جار التحقق الأمني...';
+
+            try {
+                const res = await fetch('/api/auth/admin-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'فشل تسجيل الدخول');
+                }
+
+                currentAdminToken = data.token;
+                sessionStorage.setItem(AUTH_STORAGE_KEY, data.token);
+
+                document.getElementById('admin-login-screen').classList.add('hidden');
+                document.getElementById('admin-dashboard-screen').classList.remove('hidden');
+
+                showToast('مرحباً بالمدير العام. تم فتح لوحة التحكم المركزية بنجاح', 'success');
+                loadAllAdminData();
+            } catch (err) {
+                errBox.textContent = err.message;
+                errBox.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '🔒 دخول آمن إلى لوحة التحكم';
+            }
+        }
+
+        function handleAdminLogout() {
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+            currentAdminToken = '';
+            document.getElementById('admin-dashboard-screen').classList.add('hidden');
+            document.getElementById('admin-login-screen').classList.remove('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showToast('تم تسجيل الخروج بنجاح', 'info');
+        }
+
+        // Tab Switching
+        function switchAdminTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                if (b.dataset.tab === tabId) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            document.querySelectorAll('.admin-tab-content').forEach(s => {
+                if (s.id === tabId) s.classList.remove('hidden');
+                else s.classList.add('hidden');
+            });
+        }
+
+        // Load All Admin Data
+        async function loadAllAdminData() {
+            if (!currentAdminToken) return;
+            try {
+                const [branchesRes, logsRes] = await Promise.all([
+                    apiRequest('/api/admin/branches'),
+                    apiRequest('/api/admin/audit-logs')
+                ]);
+
+                cachedBranches = branchesRes.branches || [];
+                cachedLogs = logsRes.logs || [];
+
+                renderMetrics();
+                renderBranches();
+                renderActivityTimeline();
+                renderBreaches();
+                renderAuditLogs();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function renderMetrics() {
+            const total = cachedBranches.length;
+            const active = cachedBranches.filter(b => b.status === 'active').length;
+            const frozen = cachedBranches.filter(b => b.status === 'frozen').length;
+            const deactivated = cachedBranches.filter(b => b.status === 'deactivated').length;
+            const breaches = cachedLogs.filter(l => l.action.includes('TAMPER') || l.action.includes('BREACH')).length;
+
+            document.getElementById('stat-total-branches').textContent = total;
+            document.getElementById('stat-active-branches').textContent = active;
+            document.getElementById('stat-frozen-branches').textContent = frozen;
+            document.getElementById('stat-deactivated-branches').textContent = deactivated;
+            document.getElementById('stat-breaches-count').textContent = breaches;
+            document.getElementById('branches-badge-count').textContent = `${total} فرع`;
+        }
+
+        // Render Branches List
+        function renderBranches() {
+            const container = document.getElementById('branches-list-container');
+            if (!cachedBranches || cachedBranches.length === 0) {
+                container.innerHTML = `<div class="p-8 text-center text-gray-500 font-tajawal glass-card col-span-2">لا توجد فروع مسجلة بالنظام حالياً</div>`;
+                return;
+            }
+
+            container.innerHTML = cachedBranches.map(b => {
+                const isFrozen = b.status === 'frozen';
+                const isDeactivated = b.status === 'deactivated';
+
+                let statusBadge = '';
+                if (isDeactivated) {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-rose-500/20 text-rose-400 border border-rose-500/40">🚫 معطل جذرياً</span>`;
+                } else if (isFrozen) {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-yellow-500/20 text-yellow-300 border border-yellow-500/40">❄️ مجمد أمنياً</span>`;
+                } else {
+                    statusBadge = `<span class="px-2.5 py-1 rounded-md text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">● نشط ومتاح</span>`;
+                }
+
+                const lastOpenedText = b.lastOpenedAt 
+                    ? new Date(b.lastOpenedAt).toLocaleString('ar-IQ', { dateStyle: 'short', timeStyle: 'short' })
+                    : 'لم يفتح بعد';
+
+                return `
+                    <div class="glass-card p-6 flex flex-col justify-between gap-4 border ${isDeactivated ? 'border-rose-500/40 bg-rose-950/10' : isFrozen ? 'border-yellow-500/40 bg-yellow-950/10' : 'border-white/10'}">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <h4 class="text-lg font-black text-white font-tajawal">${escapeHtml(b.name)}</h4>
+                                ${statusBadge}
+                            </div>
+
+                            <div class="text-xs text-gray-400 space-y-1 font-mono">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-cyan-400">user:</span>
+                                    <span class="text-white font-bold">${escapeHtml(b.username)}</span>
+                                    <span class="text-gray-500">|</span>
+                                    <span class="text-cyan-400">pass:</span>
+                                    <span class="text-gray-300">${escapeHtml(b.password)}</span>
+                                </div>
+                                <div class="text-[11px] text-gray-400 flex items-center gap-2 pt-1">
+                                    <span>🕒 آخر فتح: <b class="text-cyan-300">${lastOpenedText}</b></span>
+                                    <span class="text-gray-500">|</span>
+                                    <span>مرات الفتح: <b class="text-white">${b.openCount || 0}</b></span>
+                                </div>
+                                ${b.frozenReason ? `<div class="text-[11px] text-yellow-300 bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20 mt-2 font-tajawal">سبب التجميد: ${escapeHtml(b.frozenReason)}</div>` : ''}
+                                ${b.deactivatedReason ? `<div class="text-[11px] text-rose-300 bg-rose-500/10 p-2 rounded-lg border border-rose-500/20 mt-2 font-tajawal">سبب التعطيل: ${escapeHtml(b.deactivatedReason)}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Action Toolbar -->
+                        <div class="pt-4 border-t border-white/10 flex flex-wrap gap-2">
+                            ${!isDeactivated ? `
+                                <button onclick="toggleBranchFreeze('${b.id}', '${b.status}')" class="btn ${isFrozen ? 'btn-emerald' : 'btn-ghost text-yellow-300 border-yellow-500/40'} text-xs py-1.5 px-3">
+                                    ${isFrozen ? '▶ فك التجميد' : '❄️ تجميد الفرع'}
+                                </button>
+                                <button onclick="handleRadicalDeactivate('${b.id}', '${escapeHtml(b.name)}')" class="btn btn-ghost text-xs py-1.5 px-3 text-rose-400 border-rose-500/30 hover:border-rose-500 hover:bg-rose-500/10">
+                                    🚫 تعطيل جذري
+                                </button>
+                            ` : `
+                                <button onclick="toggleBranchFreeze('${b.id}', 'frozen')" class="btn btn-emerald text-xs py-1.5 px-3">
+                                    ▶ إعادة تنشيط الفرع
+                                </button>
+                            `}
+
+                            <button onclick="handleWipeBranchData('${b.id}', '${escapeHtml(b.name)}')" class="btn btn-ghost text-xs py-1.5 px-3 text-amber-400 border-amber-500/30 hover:border-amber-400">
+                                🧹 حذف وتصفير البيانات
+                            </button>
+
+                            <button onclick="handleDeleteBranch('${b.id}', '${escapeHtml(b.name)}')" class="btn btn-danger text-xs py-1.5 px-3 mr-auto">
+                                🗑️ حذف الفرع
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Activity Timeline
+        function renderActivityTimeline() {
+            const container = document.getElementById('branch-activity-table');
+            if (!cachedBranches || cachedBranches.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-gray-500 font-tajawal">لا توجد سجلات فتح مسجلة</div>`;
+                return;
+            }
+
+            container.innerHTML = cachedBranches.map(b => {
+                const dateStr = b.lastOpenedAt ? new Date(b.lastOpenedAt).toLocaleString('ar-IQ') : 'لم يسجل دخول بعد';
+                return `
+                    <div class="glass-card p-4 flex items-center justify-between gap-4 text-xs font-mono">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 text-sm">
+                                🏢
+                            </div>
+                            <div>
+                                <div class="font-bold text-white text-sm font-tajawal">${escapeHtml(b.name)}</div>
+                                <div class="text-[11px] text-gray-400">اسم المستخدم: ${escapeHtml(b.username)}</div>
+                            </div>
+                        </div>
+
+                        <div class="text-right">
+                            <div class="text-cyan-300 font-bold">${dateStr}</div>
+                            <div class="text-[10px] text-gray-400">مرات فتح الفرع: ${b.openCount || 0} مرة</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Breaches / Tamper Events
+        function renderBreaches() {
+            const container = document.getElementById('breaches-list-container');
+            const breaches = cachedLogs.filter(l => l.action.includes('TAMPER') || l.action.includes('BREACH'));
+
+            if (!breaches || breaches.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center glass-card text-emerald-400 font-tajawal">
+                        🛡️ لم يتم رصد أي خروقات أمنية أو محاولات فحص DevTools حالياً. جميع الفروع تعمل بأمان.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = breaches.map(br => {
+                const timeStr = new Date(br.timestamp).toLocaleString('ar-IQ');
+                return `
+                    <div class="glass-card p-4 border border-rose-500/40 bg-rose-950/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-rose-500 font-black font-mono">🚨 خرق أمني فوري:</span>
+                                <span class="font-bold text-white font-tajawal">${escapeHtml(br.branchName)}</span>
+                                <span class="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded font-mono">${timeStr}</span>
+                            </div>
+                            <p class="text-gray-300 font-tajawal text-xs">${escapeHtml(br.details)}</p>
+                        </div>
+                        <button onclick="toggleBranchFreeze('${br.branchId}', 'frozen')" class="btn btn-emerald text-xs py-1.5 px-3 flex-shrink-0">
+                            ▶ فك التجميد واستئناف العمل
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Render Audit Logs
+        function renderAuditLogs() {
+            const container = document.getElementById('audit-logs-container');
+            if (!cachedLogs || cachedLogs.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-gray-500 font-tajawal">سجل العمليات فارغ</div>`;
+                return;
+            }
+
+            container.innerHTML = cachedLogs.map(log => {
+                const timeStr = new Date(log.timestamp).toLocaleTimeString('ar-IQ');
+                const isCrit = log.severity === 'critical' || log.action.includes('BREACH') || log.action.includes('DEACT');
+                const isWarn = log.severity === 'warning';
+                const tagColor = isCrit ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' : isWarn ? 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30' : 'text-cyan-400 bg-cyan-500/10 border-cyan-500/30';
+
+                return `
+                    <div class="p-2.5 rounded-lg border ${isCrit ? 'border-rose-500/30 bg-rose-950/10' : 'border-white/5 bg-black/20'} flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] px-2 py-0.5 rounded border ${tagColor} font-bold">${log.action}</span>
+                            <span class="text-gray-300 font-tajawal">${escapeHtml(log.details)}</span>
+                        </div>
+                        <div class="text-gray-500 text-[10px] whitespace-nowrap">${timeStr}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Create Branch Action
+        async function handleCreateBranch() {
+            const name = document.getElementById('new-branch-name').value.trim();
+            const username = document.getElementById('new-branch-user').value.trim();
+            const password = document.getElementById('new-branch-pass').value.trim();
+
+            if (!name || !username || !password) {
+                showToast('يرجى ملء جميع الحقول', 'error');
+                return;
+            }
+
+            try {
+                const res = await apiRequest('/api/admin/branches', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, username, password })
+                });
+
+                showToast(`تم إنشاء الفرع (${name}) بنجاح`, 'success');
+                document.getElementById('add-branch-form').reset();
+                loadAllAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Toggle Freeze Action
+        async function toggleBranchFreeze(branchId, currentStatus) {
+            const targetStatus = currentStatus === 'frozen' ? 'active' : 'frozen';
+            try {
+                await apiRequest(`/api/admin/branches/${branchId}/freeze`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ status: targetStatus })
+                });
+                showToast(targetStatus === 'frozen' ? 'تم تجميد الفرع بنجاح' : 'تم فك تجميد الفرع بنجاح', 'success');
+                loadAllAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Radical Deactivate Action
+        function handleRadicalDeactivate(branchId, branchName) {
+            openConfirmModal({
+                icon: '🚫',
+                title: 'تعطيل الفرع جذرياً',
+                message: `هل أنت متأكد من رغبتك في تعطيل الفرع (${branchName}) تعطيلاً جذرياً وحقيقياً؟\nسيتم منع الفرع من فتح النظام نهائياً وإيقافه فوراً في كافة الأجهزة المتصلة.`,
+                onConfirm: async () => {
+                    try {
+                        await apiRequest(`/api/admin/branches/${branchId}/deactivate`, {
+                            method: 'PUT',
+                            body: JSON.stringify({ reason: 'تعطيل جذري بقرار الإدارة العامة' })
+                        });
+                        showToast(`تم تعطيل الفرع (${branchName}) جذرياً بنجاح`, 'success');
+                        loadAllAdminData();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // Wipe Branch Data
+        function handleWipeBranchData(branchId, branchName) {
+            openConfirmModal({
+                icon: '🧹',
+                title: 'تصفير وحذف بيانات الفرع',
+                message: `تحذير: سيتم حذف جميع الجلسات، الطاولات، الفواتير، والديون الخاصة بالفرع (${branchName}) بشكل كامل ولا يمكن التراجع عن هذا الإجراء! هل تريد المتابعة؟`,
+                onConfirm: async () => {
+                    try {
+                        await apiRequest(`/api/admin/branches/${branchId}/wipe`, {
+                            method: 'POST'
+                        });
+                        showToast(`تم تصفير وحذف بيانات الفرع (${branchName}) بالكامل`, 'success');
+                        loadAllAdminData();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // Delete Branch Permanently
+        function handleDeleteBranch(branchId, branchName) {
+            openConfirmModal({
+                icon: '🗑️',
+                title: 'حذف الفرع نهائياً',
+                message: `هل أنت متأكد من حذف الفرع (${branchName}) وجميع سجلاته وبياناته نهائياً من قاعدة البيانات السحابية؟`,
+                onConfirm: async () => {
+                    try {
+                        await apiRequest(`/api/admin/branches/${branchId}`, {
+                            method: 'DELETE'
+                        });
+                        showToast(`تم حذف الفرع (${branchName}) نهائياً`, 'success');
+                        loadAllAdminData();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // Clear Audit Logs
+        function handleClearLogs() {
+            openConfirmModal({
+                icon: '🗑️',
+                title: 'مسح سجلات المراقبة',
+                message: 'هل تريد مسح جميع سجلات العمليات والمراقبة؟',
+                onConfirm: async () => {
+                    try {
+                        await apiRequest('/api/admin/audit-logs', { method: 'DELETE' });
+                        showToast('تم مسح السجلات بنجاح', 'success');
+                        loadAllAdminData();
+                    } catch (err) {
+                        showToast(err.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // Confirmation Modal Logic
+        let confirmCallback = null;
+        function openConfirmModal({ icon, title, message, onConfirm }) {
+            const modal = document.getElementById('admin-confirm-modal');
+            document.getElementById('confirm-icon').textContent = icon || '⚠️';
+            document.getElementById('confirm-title').textContent = title || 'تأكيد';
+            document.getElementById('confirm-msg').textContent = message || '';
+            confirmCallback = onConfirm;
+            modal.classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('admin-confirm-modal');
+            modal.classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirm-yes-btn').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        // Check if admin is already logged in on initial load
+        if (currentAdminToken) {
+            document.getElementById('admin-login-screen').classList.add('hidden');
+            document.getElementById('admin-dashboard-screen').classList.remove('hidden');
+            loadAllAdminData();
+        }
+    </script>
+</body>
+</html>

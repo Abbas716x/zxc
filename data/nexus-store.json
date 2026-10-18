@@ -1,0 +1,198 @@
+{
+  "branches": [
+    {
+      "id": "branch_zayouni",
+      "name": "زیوني",
+      "username": "zayouni",
+      "password": "716",
+      "status": "active",
+      "createdAt": "2026-10-18T00:22:00.588Z",
+      "lastOpenedAt": "2026-10-18T00:22:00.588Z",
+      "openCount": 1
+    },
+    {
+      "id": "branch_mohammed",
+      "name": "محمد",
+      "username": "mohammed",
+      "password": "716",
+      "status": "active",
+      "createdAt": "2026-10-18T00:22:00.588Z",
+      "lastOpenedAt": null,
+      "openCount": 0,
+      "deactivatedReason": "تعطيل جذري بقرار الإدارة",
+      "deactivatedAt": "2026-10-18T00:22:30.467Z"
+    }
+  ],
+  "tenantData": {
+    "branch_zayouni": {
+      "tables": [],
+      "debts": [],
+      "invoices": [],
+      "categories": [
+        {
+          "id": "c1",
+          "name": "صالات البليستيشن",
+          "icon": "🎮"
+        },
+        {
+          "id": "c2",
+          "name": "المشروبات الباردة والساخنة",
+          "icon": "🥤"
+        }
+      ],
+      "products": [
+        {
+          "id": "p1",
+          "catId": "c1",
+          "name": "ساعة PS5 VIP",
+          "icon": "🕐",
+          "type": "countdown",
+          "duration": 60,
+          "price": 4000
+        },
+        {
+          "id": "p2",
+          "catId": "c2",
+          "name": "قهوة اسبريسو",
+          "icon": "☕",
+          "type": "single",
+          "duration": 0,
+          "price": 2000
+        },
+        {
+          "id": "p3",
+          "catId": "c2",
+          "name": "ريد بول منشط",
+          "icon": "⚡",
+          "type": "single",
+          "duration": 0,
+          "price": 3000
+        }
+      ],
+      "revenue": {
+        "daily": 0,
+        "yesterday": 0,
+        "monthly": 0
+      }
+    },
+    "branch_mohammed": {
+      "tables": [],
+      "debts": [],
+      "invoices": [],
+      "categories": [
+        {
+          "id": "c1",
+          "name": "صالات البليستيشن",
+          "icon": "🎮"
+        },
+        {
+          "id": "c2",
+          "name": "المشروبات الباردة والساخنة",
+          "icon": "🥤"
+        }
+      ],
+      "products": [
+        {
+          "id": "p1",
+          "catId": "c1",
+          "name": "ساعة PS5 VIP",
+          "icon": "🕐",
+          "type": "countdown",
+          "duration": 60,
+          "price": 4000
+        }
+      ],
+      "revenue": {
+        "daily": 0,
+        "yesterday": 0,
+        "monthly": 0
+      }
+    }
+  },
+  "auditLogs": [
+    {
+      "id": "LOG_mvd2zwhk",
+      "branchId": "branch_mohammed",
+      "branchName": "محمد",
+      "branchUser": "mohammed",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: محمد",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:37.112Z",
+      "epoch": 1792282957112,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvd2zrcz",
+      "branchId": "branch_mohammed",
+      "branchName": "محمد",
+      "branchUser": "mohammed",
+      "action": "BRANCH_DEACTIVATED_RADICAL",
+      "details": "🚨 تعطيل جذري وحقيقي للفرع: محمد. السبب: تعطيل جذري بقرار الإدارة",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:30.467Z",
+      "epoch": 1792282950467,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvd2zol5",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:26.873Z",
+      "epoch": 1792282946873,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvd2zgj6",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع تلقائياً! التفاصيل: F12 Pressed",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:16.434Z",
+      "epoch": 1792282936434,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvd2zapa",
+      "branchId": "SECURITY_ALERT",
+      "branchName": "محاولة وصول غير مصرح",
+      "branchUser": "3BS",
+      "action": "FAILED_ADMIN_LOGIN",
+      "details": "محاولة فاشلة لتسجيل دخول الأدمن باسم مستخدم: 3BS",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:08.878Z",
+      "epoch": 1792282928878,
+      "severity": "warning"
+    },
+    {
+      "id": "LOG_mvd2z7ph",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "3BS",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:22:04.997Z",
+      "epoch": 1792282924997,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_INIT",
+      "branchId": "SYSTEM",
+      "branchName": "النظام المركزي",
+      "branchUser": "admin",
+      "action": "SYSTEM_BOOT",
+      "details": "تم بدء تشغيل الخادم السحابي المشفر وتأمين قاعدة البيانات",
+      "clientId": "server",
+      "timestamp": "2026-10-18T00:22:00.588Z",
+      "epoch": 1792282920588,
+      "severity": "normal"
+    }
+  ]
+}

@@ -28,14 +28,42 @@
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-html, body {
+html {
     background: #050714 !important;
     color: var(--text-main);
     font-family: 'Tajawal', sans-serif;
     overflow-x: hidden;
-    min-height: 100vh;
-    overscroll-behavior: none;
+    overflow-y: auto !important;
+    scroll-behavior: smooth;
     direction: rtl;
+    height: 100%;
+}
+
+body {
+    background: #050714 !important;
+    color: var(--text-main);
+    font-family: 'Tajawal', sans-serif;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    min-height: 100vh;
+    direction: rtl;
+    touch-action: pan-y;
+}
+
+/* Smooth Natural Mouse Wheel Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(5, 7, 20, 0.6);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 240, 255, 0.3);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 240, 255, 0.6);
 }
 
 /* ==================== 3D SPACE CANVAS & DEEP LAYERS ==================== */
@@ -952,6 +980,8 @@ select.inp option {
     padding: 16px;
     animation: fadeIn 0.25s ease-out;
     pointer-events: none;
+    overflow-y: auto !important;
+    touch-action: pan-y;
 }
 
 .modal-bd[style*="display: flex"], .modal-bd.active {
