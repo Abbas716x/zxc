@@ -25,55 +25,186 @@
   ],
   "tenantData": {
     "branch_zayouni": {
-      "tables": [],
-      "debts": [],
-      "invoices": [],
-      "categories": [
+      "tables": [
         {
-          "id": "c1",
-          "name": "صالات البليستيشن",
-          "icon": "🎮"
-        },
-        {
-          "id": "c2",
-          "name": "المشروبات الباردة والساخنة",
-          "icon": "🥤"
+          "createdAt": "2026-10-01T03:38:24.589Z",
+          "customer": "",
+          "items": [],
+          "status": "open",
+          "discount": 0,
+          "id": "muozi7kdpi1fg",
+          "name": "جهاز PS5 3"
         }
       ],
+      "editingProductId": null,
+      "activeView": "invoices",
+      "pickerCatId": "c4",
+      "revenue": {
+        "daily": 0,
+        "monthly": 1080354,
+        "yesterday": 1067354
+      },
+      "_branchId": "branch_zayouni",
       "products": [
         {
-          "id": "p1",
-          "catId": "c1",
-          "name": "ساعة PS5 VIP",
-          "icon": "🕐",
+          "icon": "⏱",
+          "duration": 30,
           "type": "countdown",
-          "duration": 60,
-          "price": 4000
-        },
-        {
-          "id": "p2",
-          "catId": "c2",
-          "name": "قهوة اسبريسو",
-          "icon": "☕",
-          "type": "single",
-          "duration": 0,
+          "catId": "c1",
+          "name": "نصف ساعة PS5",
+          "id": "p1",
           "price": 2000
         },
         {
+          "type": "countdown",
+          "price": 4000,
+          "icon": "🕐",
+          "duration": 60,
+          "id": "p2",
+          "catId": "c1",
+          "name": "ساعة كاملة PS5"
+        },
+        {
+          "type": "open",
+          "price": 4000,
+          "icon": "♾",
           "id": "p3",
+          "catId": "c1",
+          "name": "وقت مفتوح PS5",
+          "duration": 0
+        },
+        {
+          "price": 1000,
+          "id": "p5",
+          "name": "عصير برتقال طبيعي",
           "catId": "c2",
-          "name": "ريد بول منشط",
-          "icon": "⚡",
-          "type": "single",
+          "type": "direct",
           "duration": 0,
-          "price": 3000
+          "icon": "🍊"
+        },
+        {
+          "price": 5000,
+          "name": "أركيلة تفاحتين فاخر",
+          "duration": 0,
+          "type": "direct",
+          "catId": "c4",
+          "icon": "💨",
+          "id": "p8"
+        },
+        {
+          "type": "open",
+          "icon": "📦",
+          "price": 10000,
+          "duration": 0,
+          "id": "muoz8m9g4kor1",
+          "catId": "c1",
+          "name": "بلي  وقت مفتوح"
         }
       ],
-      "revenue": {
-        "daily": 0,
-        "yesterday": 0,
-        "monthly": 0
-      }
+      "categories": [
+        {
+          "name": "صالات البليستيشن",
+          "icon": "🎮",
+          "id": "c1"
+        },
+        {
+          "name": "المشروبات الباردة والساخنة",
+          "icon": "🥤",
+          "id": "c2"
+        },
+        {
+          "id": "c4",
+          "icon": "💨",
+          "name": "قسم الأراجيل الفاخرة"
+        },
+        {
+          "icon": "📁",
+          "name": "هخمت",
+          "id": "mvd26u7mm3ae5"
+        }
+      ],
+      "debts": [],
+      "invoices": [
+        {
+          "paid": 972354,
+          "debt": 0,
+          "tableName": "غرفة VIP #2",
+          "customer": "زبون عام",
+          "type": "checkout",
+          "tag": "مدفوع بالكامل",
+          "date": "2026-10-05T04:45:15.602Z",
+          "items": [
+            {
+              "total": 972354,
+              "price": 10000,
+              "qty": 1,
+              "name": "بلي  وقت مفتوح"
+            }
+          ],
+          "id": "INV-5515602",
+          "total": 972354
+        },
+        {
+          "customer": "زبون عام",
+          "tableName": "جهاز PS5 2",
+          "id": "INV-5923277",
+          "total": 95000,
+          "items": [
+            {
+              "price": 5000,
+              "qty": 19,
+              "total": 95000,
+              "name": "أركيلة تفاحتين فاخر"
+            }
+          ],
+          "date": "2026-10-01T03:38:43.277Z",
+          "type": "checkout",
+          "paid": 95000,
+          "debt": 0,
+          "tag": "مدفوع بالكامل"
+        },
+        {
+          "tag": "مدفوع بالكامل",
+          "debt": 0,
+          "paid": 13000,
+          "items": [
+            {
+              "total": 1000,
+              "price": 1000,
+              "qty": 1,
+              "name": "عصير برتقال طبيعي"
+            },
+            {
+              "total": 5000,
+              "price": 5000,
+              "qty": 1,
+              "name": "أركيلة تفاحتين فاخر"
+            },
+            {
+              "name": "نصف ساعة PS5",
+              "qty": 1,
+              "price": 2000,
+              "total": 2000
+            },
+            {
+              "name": "أركيلة تفاحتين فاخر",
+              "total": 5000,
+              "qty": 1,
+              "price": 5000
+            }
+          ],
+          "type": "checkout",
+          "total": 13000,
+          "tableName": "جهاز PS5 1",
+          "date": "2026-10-01T03:37:51.934Z",
+          "id": "INV-5871934",
+          "customer": "زبون عام"
+        }
+      ],
+      "_branchName": "زیوني",
+      "activeTableId": "muozi7kdpi1fg",
+      "managingDebtId": null,
+      "earlyItemId": null
     },
     "branch_mohammed": {
       "tables": [],
@@ -110,6 +241,18 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "LOG_mvd3zxd0",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: Test DevTools F12",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-18T00:50:37.860Z",
+      "epoch": 1792284637860,
+      "severity": "critical"
+    },
     {
       "id": "LOG_mvd3dmpo",
       "branchId": "MASTER_ADMIN",
@@ -242,5 +385,6 @@
       "epoch": 1792282920588,
       "severity": "normal"
     }
-  ]
+  ],
+  "systemFrozen": false
 }

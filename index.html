@@ -26,6 +26,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
+    <script src="firebase-client.js"></script>
 
     <!-- React 18 & Recharts Engine -->
     <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
@@ -34,6 +35,32 @@
 
     <!-- Master Architecture Stylesheet -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Pre-Render Synchronous Hard Security Freeze Trap (Zero Refresh Bypass) -->
+    <script>
+        (function() {
+            try {
+                const lock = localStorage.getItem('qx716_lockdown');
+                const branch = localStorage.getItem('qx716_active_branch');
+                let isFrozen = false;
+                let isDeactivated = false;
+                if (lock) {
+                    const l = JSON.parse(lock);
+                    if (l && l.frozen) isFrozen = true;
+                }
+                if (branch) {
+                    const b = JSON.parse(branch);
+                    if (b && b.status === 'frozen') isFrozen = true;
+                    if (b && b.status === 'deactivated') isDeactivated = true;
+                }
+                if (isDeactivated) {
+                    document.documentElement.classList.add('system-terminated');
+                } else if (isFrozen) {
+                    document.documentElement.classList.add('system-frozen');
+                }
+            } catch(e) {}
+        })();
+    </script>
 </head>
 
 <body class="select-none overflow-x-hidden antialiased">
@@ -57,10 +84,10 @@
         <div class="security-card glass text-center p-8 max-w-lg mx-4 border-rose-500 shadow-2xl">
             <div class="text-6xl mb-4 animate-bounce">🚨</div>
             <h3 class="text-2xl font-black text-rose-500 tracking-wider font-mono">BRANCH FROZEN BY SECURITY PROTOCOL</h3>
-            <p class="text-gray-200 text-sm mt-3 leading-relaxed font-tajawal">
+            <p id="breach-reason-text" class="text-gray-200 text-sm mt-3 leading-relaxed font-tajawal">
                 تم رصد محاولة فحص العناصر أو فتح أدوات المطور (DevTools / Inspect).<br>
                 <b class="text-rose-400">تم تجميد هذا الفرع بالكامل وتوقفه عن العمل نهائياً فوراً</b> لحماية البيانات.<br>
-                لا يمكن إعادة تشغيل هذا الفرع أو فك التجميد إلا من خلال تدخل الأدمن الرئيسي وصلاحياته الخاصة عبر لوحة الإدارة المركزية (<code class="text-cyan-400 font-mono">adminx.html</code>).
+                لا يمكن إعادة تشغيل هذا الفرع أو فك التجميد إلا من خلال تدخل المدير العام حصراً عبر الإدارة المركزية.
             </p>
             <div class="mt-6 flex flex-col gap-2">
                 <span class="badge badge-expired font-mono text-xs self-center">STATUS: FROZEN_UNTIL_ADMIN_INTERVENTION</span>

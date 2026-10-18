@@ -18,23 +18,28 @@
             const raw = localStorage.getItem('qx716_active_branch');
             if (raw) {
                 const b = JSON.parse(raw);
-                return b.id || 'default_tenant';
+                if (b && b.id) return b.id;
             }
         } catch (e) {}
-        return 'active_branch';
+        return 'default';
     }
 
     // Radical Real Freeze: Permanent Lockdown & Server Synchronization
     async function triggerPermanentTamperFreeze(reason) {
-        if (breachActive) return;
         breachActive = true;
+        const breachReason = reason || 'محاولة فحص الأكواد أو فتح أدوات المطور (DevTools / Inspect)';
 
-        const branchId = getActiveBranchId();
-        const now = Date.now();
+        // 1. Immediately apply hard class to root DOM (Zero Refresh Bypass)
+        document.documentElement.classList.add('system-frozen');
 
-        // 1. Instantly display security freeze overlay
+        // 2. Instantly display security freeze overlay
         if (overlay) {
             overlay.classList.remove('hidden');
+        }
+
+        const reasonTextEl = document.getElementById('breach-reason-text');
+        if (reasonTextEl) {
+            reasonTextEl.innerHTML = `تم رصد محاولة فحص العناصر أو فتح أدوات المطور.<br><b class="text-rose-400">تم تجميد هذا الفرع بالكامل وتوقفه عن العمل نهائياً فوراً</b> لحماية البيانات.<br><span class="text-xs text-yellow-300 font-mono mt-1 block">سبب الرصد: ${breachReason}</span><br>لا يمكن إعادة تشغيل هذا الفرع أو فك التجميد إلا من خلال تدخل المدير العام حصراً عبر الإدارة المركزية.`;
         }
 
         // Close any open modals or menus
@@ -44,15 +49,41 @@
             if (drawer) drawer.classList.remove('open');
         } catch (e) {}
 
-        // 2. Report tamper breach to backend immediately to freeze branch in database
-        if (now - lastBreachReportTs > 2000) {
+        // 3. Store permanent tamper lock in local and session storage
+        try {
+            localStorage.setItem('qx716_lockdown', JSON.stringify({
+                frozen: true,
+                reason: breachReason,
+                timestamp: Date.now()
+            }));
+            sessionStorage.setItem('qx716_lockdown', 'true');
+
+            const raw = localStorage.getItem('qx716_active_branch');
+            if (raw) {
+                const b = JSON.parse(raw);
+                b.status = 'frozen';
+                b.frozenReason = breachReason;
+                localStorage.setItem('qx716_active_branch', JSON.stringify(b));
+            } else {
+                localStorage.setItem('qx716_active_branch', JSON.stringify({
+                    id: 'branch_zayouni',
+                    status: 'frozen',
+                    frozenReason: breachReason
+                }));
+            }
+        } catch (e) {}
+
+        // 4. Report tamper breach to backend immediately to permanently freeze branch in central database
+        const branchId = getActiveBranchId();
+        const now = Date.now();
+        if (now - lastBreachReportTs > 1500) {
             lastBreachReportTs = now;
             try {
                 await fetch(`/api/branches/${branchId}/tamper`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        reason: reason || 'محاولة فحص الأكواد أو فتح أدوات المطور (DevTools/Inspect)',
+                        reason: breachReason,
                         clientDetails: {
                             userAgent: navigator.userAgent,
                             screen: `${window.innerWidth}x${window.innerHeight}`,
@@ -61,17 +92,39 @@
                     })
                 });
             } catch (err) {
-                console.warn('Tamper report dispatched locally');
+                // Secondary fallback attempt to system tamper route
+                try {
+                    await fetch('/api/system/tamper', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason: breachReason })
+                    });
+                } catch (e2) {}
+            }
+
+            // Real-time Cloud Firebase Broadcast (Freezes in Firestore instantly)
+            if (window.NexusFirebase && typeof window.NexusFirebase.freezeBranchInCloud === 'function') {
+                window.NexusFirebase.freezeBranchInCloud(branchId, breachReason).catch(() => {});
             }
         }
+    }
 
-        // 3. Mark locally as frozen as well
+    // Restore active state when Admin explicitly unfreezes the branch
+    function restoreActiveState() {
+        breachActive = false;
+        killSwitchActive = false;
+        document.documentElement.classList.remove('system-frozen');
+        document.documentElement.classList.remove('system-terminated');
+        if (overlay) overlay.classList.add('hidden');
+        if (killswitchOverlay) killswitchOverlay.classList.add('hidden');
         try {
+            localStorage.removeItem('qx716_lockdown');
+            sessionStorage.removeItem('qx716_lockdown');
             const raw = localStorage.getItem('qx716_active_branch');
             if (raw) {
                 const b = JSON.parse(raw);
-                b.status = 'frozen';
-                b.frozenReason = reason;
+                b.status = 'active';
+                delete b.frozenReason;
                 localStorage.setItem('qx716_active_branch', JSON.stringify(b));
             }
         } catch (e) {}
@@ -80,6 +133,7 @@
     // 🔒 Remote Kill-Switch / Radical Deactivation Screen
     function triggerKillSwitchUI(reasonText) {
         killSwitchActive = true;
+        document.documentElement.classList.add('system-terminated');
         try {
             if (killswitchMsg) {
                 killswitchMsg.textContent = reasonText || 'تم إيقاف وتعطيل هذا الفرع بشكل جذري ونهائي بقرار الإدارة العامة المركزية.';
@@ -178,10 +232,22 @@
         }, 1000);
     } catch (e) {}
 
+    // Immediate pre-enforcement on initial script load
+    try {
+        const lock = localStorage.getItem('qx716_lockdown');
+        if (lock) {
+            const l = JSON.parse(lock);
+            if (l && l.frozen) {
+                triggerPermanentTamperFreeze(l.reason || 'إغلاق أمني مسبق (محاولة تجاوز التجميد عبر التحديث)');
+            }
+        }
+    } catch (e) {}
+
     // Public Security API
     window.SecurityEngine = {
         triggerBreach: triggerPermanentTamperFreeze,
         triggerKillSwitchUI: triggerKillSwitchUI,
+        restoreActiveState: restoreActiveState,
         isBreachActive: () => breachActive,
         isKillSwitchActive: () => killSwitchActive
     };

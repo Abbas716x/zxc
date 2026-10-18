@@ -1037,6 +1037,43 @@ select.inp option {
     display: none !important;
 }
 
+/* Hard Permanent Lockdown States (Instant Pre-render Protection) */
+html.system-frozen #security-breach-overlay {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: all !important;
+    z-index: 2147483647 !important;
+}
+
+html.system-frozen #app,
+html.system-frozen #drawer,
+html.system-frozen .modal-bd,
+html.system-frozen header,
+html.system-frozen nav,
+html.system-frozen main {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    user-select: none !important;
+}
+
+html.system-terminated #killswitch-overlay {
+    display: flex !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: all !important;
+    z-index: 2147483647 !important;
+}
+
+html.system-terminated #app,
+html.system-terminated #drawer,
+html.system-terminated .modal-bd {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
 .security-card {
     border: 2px solid rgba(255, 0, 128, 0.6) !important;
     box-shadow: 0 0 80px rgba(255, 0, 128, 0.4) !important;

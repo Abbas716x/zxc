@@ -344,7 +344,33 @@ async function startServer() {
     const { id } = req.params;
     const { status, reason } = req.body; // status can be 'frozen' or 'active'
     const store = loadStore();
-    const branch = store.branches.find(b => b.id === id);
+
+    if (id === 'all' || id === 'system' || id === 'SYSTEM_WIDE') {
+      const targetStatus = status || 'active';
+      store.branches.forEach(b => {
+        if (b.status !== 'deactivated') {
+          b.status = targetStatus;
+          if (targetStatus === 'active') {
+            delete b.frozenReason;
+            delete b.frozenAt;
+          } else {
+            b.frozenReason = reason || 'تم تجميد الفرع بقرار إداري من المدير العام';
+            b.frozenAt = new Date().toISOString();
+          }
+        }
+      });
+      (store as any).systemFrozen = targetStatus === 'frozen';
+      if (targetStatus === 'active') {
+        delete (store as any).systemFrozenReason;
+      }
+      saveStore(store);
+      return res.json({ ok: true, status: targetStatus, message: 'تم تحديث حالة كافة الفروع بنجاح' });
+    }
+
+    let branch = store.branches.find(b => b.id === id);
+    if (!branch && store.branches.length > 0) {
+      branch = store.branches[0];
+    }
     if (!branch) {
       return res.status(404).json({ error: 'الفرع غير موجود' });
     }
@@ -357,6 +383,8 @@ async function startServer() {
     } else {
       delete branch.frozenReason;
       delete branch.frozenAt;
+      (store as any).systemFrozen = false;
+      delete (store as any).systemFrozenReason;
     }
 
     const logEntry: AuditLog = {
@@ -500,7 +528,7 @@ async function startServer() {
 
     if (branch.status === 'frozen') {
       return res.status(403).json({
-        error: `هذا الفرع مجمد حالياً (${branch.frozenReason || 'تجميد أمني'}). يرجى مراجعة الإدارة المركزية (adminx.html).`,
+        error: `هذا الفرع مجمد حالياً (${branch.frozenReason || 'تجميد أمني'}). يرجى مراجعة إدارة النظام المركزية.`,
         status: 'frozen',
       });
     }
@@ -540,26 +568,53 @@ async function startServer() {
   app.get('/api/branches/:id/status', (req: Request, res: Response) => {
     const { id } = req.params;
     const store = loadStore();
-    const branch = store.branches.find(b => b.id === id);
-    if (!branch) {
-      return res.status(404).json({ error: 'الفرع غير موجود' });
+    let branch = store.branches.find(b => b.id === id);
+    if (!branch && (id === 'default' || id === 'active_branch' || id === 'default_tenant')) {
+      branch = store.branches[0];
     }
+
+    const isSystemFrozen = (store as any).systemFrozen;
+    const effectiveStatus = (branch && branch.status === 'deactivated')
+      ? 'deactivated'
+      : (branch && branch.status === 'frozen') || isSystemFrozen
+        ? 'frozen'
+        : (branch ? branch.status : 'active');
+
+    const effectiveReason = (branch && branch.status === 'deactivated')
+      ? branch.deactivatedReason
+      : (branch && branch.frozenReason) || (store as any).systemFrozenReason || 'تم تجميد النظام أمنياً بقرار الإدارة المركزية';
+
     return res.json({
-      id: branch.id,
-      name: branch.name,
-      status: branch.status,
-      frozenReason: branch.frozenReason,
-      deactivatedReason: branch.deactivatedReason,
-      lastOpenedAt: branch.lastOpenedAt,
+      id: branch ? branch.id : (id || 'default'),
+      name: branch ? branch.name : 'الفرع الافتراضي',
+      status: effectiveStatus,
+      frozenReason: effectiveReason,
+      deactivatedReason: branch ? branch.deactivatedReason : undefined,
+      lastOpenedAt: branch ? branch.lastOpenedAt : undefined,
+      systemFrozen: !!isSystemFrozen,
+    });
+  });
+
+  // Global System Security Status
+  app.get('/api/system/status', (req: Request, res: Response) => {
+    const store = loadStore();
+    return res.json({
+      systemFrozen: !!(store as any).systemFrozen,
+      systemFrozenReason: (store as any).systemFrozenReason || null,
+      branchesCount: store.branches.length,
+      frozenBranchesCount: store.branches.filter(b => b.status === 'frozen').length,
     });
   });
 
   // Anti-Debugging / Tamper Detection Trigger
-  app.post('/api/branches/:id/tamper', (req: Request, res: Response) => {
-    const { id } = req.params;
+  app.post(['/api/branches/:id/tamper', '/api/system/tamper'], (req: Request, res: Response) => {
+    const id = req.params.id || 'default';
     const { reason, clientDetails } = req.body;
     const store = loadStore();
-    const branch = store.branches.find(b => b.id === id);
+    let branch = store.branches.find(b => b.id === id);
+    if (!branch) {
+      branch = store.branches[0];
+    }
 
     const breachReason = reason || 'محاولة فحص الأكواد أو فتح أدوات المطور (DevTools / Inspect)';
     const now = new Date().toISOString();
@@ -569,14 +624,16 @@ async function startServer() {
       branch.frozenReason = breachReason;
       branch.frozenAt = now;
     }
+    (store as any).systemFrozen = true;
+    (store as any).systemFrozenReason = breachReason;
 
     const logEntry: AuditLog = {
       id: 'LOG_' + Date.now().toString(36),
-      branchId: id,
-      branchName: branch ? branch.name : 'Unknown Branch',
+      branchId: branch ? branch.id : 'SYSTEM_WIDE',
+      branchName: branch ? branch.name : 'كافة الفروع والنظام',
       branchUser: branch ? branch.username : 'Unknown',
       action: 'TAMPER_SECURITY_BREACH',
-      details: `🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع تلقائياً! التفاصيل: ${breachReason}`,
+      details: `🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: ${breachReason}`,
       clientId: req.ip || 'tamper-client',
       timestamp: now,
       epoch: Date.now(),
@@ -589,7 +646,7 @@ async function startServer() {
       ok: true,
       frozen: true,
       status: 'frozen',
-      message: 'تم تجميد الفرع فوراً وإبلاغ الإدارة المركزية بالخرق الأمني',
+      message: 'تم تجميد الفرع فوراً وتثبيت الإغلاق الأمني الدائم في قاعدة البيانات',
     });
   });
 

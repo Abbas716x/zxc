@@ -148,6 +148,12 @@
             setFbStatus('online', 'ONLINE');
             updateBranchUI();
             startStatusHeartbeat();
+
+            // Real-time Cloud Firebase Connection
+            if (window.NexusFirebase && typeof window.NexusFirebase.listenBranchRealtime === 'function') {
+                window.NexusFirebase.listenBranchRealtime(currentTenant.id);
+            }
+
             return currentTenant;
         } catch (err) {
             setFbStatus('offline', 'AUTH_ERR');
@@ -168,46 +174,63 @@
         } catch (e) {}
     }
 
-    // Live Heartbeat: Continuous Enforcement of Frozen / Deactivated States
+    // Live Heartbeat: Continuous High-Frequency Enforcement of Frozen / Deactivated States (1.5s Real-Time)
     function startStatusHeartbeat() {
         if (statusHeartbeatTimer) clearInterval(statusHeartbeatTimer);
-        statusHeartbeatTimer = setInterval(checkActiveBranchStatus, 12000);
+        statusHeartbeatTimer = setInterval(checkActiveBranchStatus, 1500);
     }
 
     async function checkActiveBranchStatus() {
-        if (!currentTenant || !currentTenant.id) return;
+        const targetId = currentTenant ? currentTenant.id : 'default';
         try {
-            const res = await fetch(`/api/branches/${currentTenant.id}/status`);
+            const res = await fetch(`/api/branches/${targetId}/status`);
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'deactivated') {
+                    setFbStatus('offline', 'TERMINATED');
                     if (window.SecurityEngine) {
                         window.SecurityEngine.triggerKillSwitchUI(data.deactivatedReason || 'تم تعطيل هذا الفرع بشكل جذري بقرار الإدارة العامة.');
                     }
+                    return false;
                 } else if (data.status === 'frozen') {
+                    setFbStatus('offline', 'FROZEN');
                     if (window.SecurityEngine) {
                         window.SecurityEngine.triggerBreach(data.frozenReason || 'تم تجميد هذا الفرع بقرار الإدارة المركزية.');
                     }
+                    return false;
+                } else if (data.status === 'active') {
+                    // Admin unfroze the branch from admin panel!
+                    if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
+                        window.SecurityEngine.restoreActiveState();
+                    }
+                    setFbStatus('online', 'ONLINE');
+                    return true;
                 }
             }
         } catch (e) {}
+        return true;
     }
 
     // Audit Log Pipeline
     async function logAuditEvent(action, details) {
         try {
-            await fetch('/api/audit-logs', {
+            const payload = {
+                branchId: currentTenant ? currentTenant.id : 'SYSTEM',
+                branchName: currentTenant ? currentTenant.name : 'SYSTEM',
+                branchUser: currentTenant ? currentTenant.username : 'SYSTEM',
+                action,
+                details,
+                severity: action.includes('BREACH') ? 'critical' : 'normal'
+            };
+            fetch('/api/audit-logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    branchId: currentTenant ? currentTenant.id : 'SYSTEM',
-                    branchName: currentTenant ? currentTenant.name : 'SYSTEM',
-                    branchUser: currentTenant ? currentTenant.username : 'SYSTEM',
-                    action,
-                    details,
-                    severity: action.includes('BREACH') ? 'critical' : 'normal'
-                })
-            });
+                body: JSON.stringify(payload)
+            }).catch(() => {});
+
+            if (window.NexusFirebase && typeof window.NexusFirebase.logAudit === 'function') {
+                window.NexusFirebase.logAudit(payload).catch(() => {});
+            }
         } catch (e) {}
     }
 
@@ -275,6 +298,12 @@
             updateLastSavedDisplay(now);
             flashSaveIndicator('saved');
             setFbStatus('online', 'ONLINE');
+
+            // Save snapshot directly to Firebase Firestore
+            if (window.NexusFirebase && typeof window.NexusFirebase.saveTenantDataToCloud === 'function') {
+                window.NexusFirebase.saveTenantDataToCloud(currentTenant.id, state).catch(() => {});
+            }
+
             return true;
         } catch (err) {
             setFbStatus('offline', 'OFFLINE');
@@ -332,8 +361,15 @@
         updateBranchUI();
         setFbStatus('online', 'ONLINE');
         updateLastSavedDisplay();
+        
+        // Immediate authoritative server verification before releasing startup
+        await checkActiveBranchStatus();
         startStatusHeartbeat();
-        checkActiveBranchStatus();
+
+        // Connect real-time Firebase listener
+        if (window.NexusFirebase && typeof window.NexusFirebase.listenBranchRealtime === 'function' && currentTenant) {
+            window.NexusFirebase.listenBranchRealtime(currentTenant.id);
+        }
     }
 
     // Engine Public API
