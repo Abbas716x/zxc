@@ -2,17 +2,18 @@
    X00716 NEXUS ENTERPRISE — Resilient PWA Service Worker Engine
    ================================================================== */
 
-const CACHE_NAME = 'x00716-nexus-enterprise-v6.0.8';
+const CACHE_NAME = 'x00716-nexus-enterprise-v6.0.9';
 
 const STATIC_ASSETS = [
-    './',
-    'index.html',
-    'styles.css',
-    '3d-space.js',
-    'backend-config.js',
-    'security.js',
-    'app.js',
-    'manifest.webmanifest'
+    '/',
+    '/index.html',
+    '/styles.css',
+    '/3d-space.js',
+    '/firebase-client.js',
+    '/backend-config.js',
+    '/security.js',
+    '/app.js',
+    '/manifest.webmanifest'
 ];
 
 // Pre-cache Static App Shell Assets
@@ -48,8 +49,10 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
 
-    // Bypass caching for Firestore, Firebase Auth, Google APIs, and Non-GET requests
+    // Bypass caching for APIs, Admin panel, Firestore, Firebase Auth, Google APIs, and Non-GET requests
     if (
+        requestUrl.pathname.startsWith('/api') ||
+        requestUrl.pathname.includes('admin') ||
         requestUrl.hostname.includes('firebase') ||
         requestUrl.hostname.includes('firestore') ||
         requestUrl.hostname.includes('googleapis') ||

@@ -167,7 +167,12 @@ function saveStore(data: StoreData) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf-8');
+    if (data.auditLogs && data.auditLogs.length > 80) {
+      data.auditLogs = data.auditLogs.slice(0, 80);
+    }
+    const tempFile = `${DATA_FILE}.tmp.${Date.now()}`;
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf-8');
+    fs.renameSync(tempFile, DATA_FILE);
   } catch (err) {
     console.error('Error writing store file:', err);
   }
@@ -631,28 +636,32 @@ async function startServer() {
 
     const breachReason = reason || 'محاولة فحص الأكواد أو فتح أدوات المطور (DevTools / Inspect)';
     const now = new Date().toISOString();
+    const alreadyFrozen = branch && branch.status === 'frozen';
 
     if (branch) {
       branch.status = 'frozen';
       branch.frozenReason = breachReason;
-      branch.frozenAt = now;
+      branch.frozenAt = branch.frozenAt || now;
     }
     (store as any).systemFrozen = true;
     (store as any).systemFrozenReason = breachReason;
 
-    const logEntry: AuditLog = {
-      id: 'LOG_' + Date.now().toString(36),
-      branchId: branch ? branch.id : 'SYSTEM_WIDE',
-      branchName: branch ? branch.name : 'كافة الفروع والنظام',
-      branchUser: branch ? branch.username : 'Unknown',
-      action: 'TAMPER_SECURITY_BREACH',
-      details: `🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: ${breachReason}`,
-      clientId: req.ip || 'tamper-client',
-      timestamp: now,
-      epoch: Date.now(),
-      severity: 'critical',
-    };
-    store.auditLogs.unshift(logEntry);
+    if (!alreadyFrozen) {
+      const logEntry: AuditLog = {
+        id: 'LOG_' + Date.now().toString(36),
+        branchId: branch ? branch.id : 'SYSTEM_WIDE',
+        branchName: branch ? branch.name : 'كافة الفروع والنظام',
+        branchUser: branch ? branch.username : 'Unknown',
+        action: 'TAMPER_SECURITY_BREACH',
+        details: `🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: ${breachReason}`,
+        clientId: req.ip || 'tamper-client',
+        timestamp: now,
+        epoch: Date.now(),
+        severity: 'critical',
+      };
+      store.auditLogs.unshift(logEntry);
+      if (store.auditLogs.length > 80) store.auditLogs = store.auditLogs.slice(0, 80);
+    }
     saveStore(store);
 
     return res.json({
@@ -746,6 +755,22 @@ async function startServer() {
   app.all('/api/*', (req: Request, res: Response) => {
     res.status(404).json({ error: `المسار البرمجي غير موجود: ${req.method} ${req.path}` });
   });
+
+  // Global API Error Handler (Never return HTML for API errors)
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) {
+      console.error('API Error:', err);
+      return res.status(err.status || 500).json({
+        error: err.message || 'حدث خطأ غير متوقع في الخادم',
+        ok: false,
+      });
+    }
+    next(err);
+  });
+
+  // Directly serve static assets (scripts, styles, icons, manifest) with correct MIME types
+  app.use(express.static(__dirname, { index: false }));
+  app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
   // Mount Vite or Static files depending on environment
   if (process.env.NODE_ENV === 'production') {

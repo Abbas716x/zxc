@@ -26,7 +26,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics-compat.js"></script>
-    <script src="firebase-client.js"></script>
+    <script src="/firebase-client.js"></script>
 
     <!-- React 18 & Recharts Engine -->
     <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
@@ -34,7 +34,7 @@
     <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.7/umd/Recharts.min.js"></script>
 
     <!-- Master Architecture Stylesheet -->
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/styles.css">
 
     <!-- Pre-Render Synchronous Hard Security Freeze Trap (Zero Refresh Bypass) -->
     <script>
@@ -665,16 +665,16 @@
     </div>
 
     <!-- Modular Production Scripts Execution Pipeline -->
-    <script src="3d-space.js"></script>
-    <script src="backend-config.js"></script>
-    <script src="security.js"></script>
-    <script src="app.js"></script>
+    <script src="/3d-space.js"></script>
+    <script src="/backend-config.js"></script>
+    <script src="/security.js"></script>
+    <script src="/app.js"></script>
 
     <!-- PWA Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(() => {});
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
         }
     </script>

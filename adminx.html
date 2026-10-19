@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-    <script src="firebase-client.js"></script>
+    <script src="/firebase-client.js"></script>
     <style>
         :root {
             --bg-primary: #050714;
@@ -494,7 +494,12 @@
             if (currentAdminToken) {
                 options.headers['Authorization'] = `Bearer ${currentAdminToken}`;
             }
-            options.headers['Content-Type'] = 'application/json';
+            options.headers['Accept'] = 'application/json';
+
+            // Only attach Content-Type when sending data
+            if (options.body || options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH') {
+                options.headers['Content-Type'] = 'application/json';
+            }
 
             try {
                 const res = await fetch(endpoint, options);
@@ -505,13 +510,16 @@
                 const rawText = await res.text();
                 let data = null;
                 try {
-                    data = JSON.parse(rawText);
+                    data = rawText ? JSON.parse(rawText) : {};
                 } catch (jsonErr) {
-                    console.error('Non-JSON response:', rawText.slice(0, 150));
-                    throw new Error('استجابة غير صالحة من الخادم. يرجى إعادة المحاولة.');
+                    console.warn(`Non-JSON response from ${endpoint}:`, rawText.slice(0, 150));
+                    if (res.ok) {
+                        return {};
+                    }
+                    throw new Error(`استجابة غير صالحة من السيرفر (${res.status})`);
                 }
                 if (!res.ok) {
-                    throw new Error((data && data.error) ? data.error : 'حدث خطأ في معالجة الطلب');
+                    throw new Error((data && data.error) ? data.error : `خطأ من الخادم (${res.status})`);
                 }
                 return data;
             } catch (err) {
@@ -559,6 +567,7 @@
                         currentAdminToken = data.token;
                         sessionStorage.setItem(AUTH_STORAGE_KEY, data.token);
                         loginSuccess = true;
+                    } else if (data && data.error) {
                         const uLow = username.toLowerCase();
                         const isMaster = (uLow === 'admin' || uLow === '3bs' || uLow === 'master') &&
                                          (password === '716C' || password === '716c' || password === 'admin' || password === 'admin123');
@@ -631,12 +640,22 @@
             if (!currentAdminToken) return;
             try {
                 const [branchesRes, logsRes] = await Promise.all([
-                    apiRequest('/api/admin/branches'),
-                    apiRequest('/api/admin/audit-logs')
+                    apiRequest('/api/admin/branches').catch(e => {
+                        console.warn('Branches fetch error:', e.message);
+                        return { branches: cachedBranches || [] };
+                    }),
+                    apiRequest('/api/admin/audit-logs').catch(e => {
+                        console.warn('Audit logs fetch error:', e.message);
+                        return { logs: cachedLogs || [] };
+                    })
                 ]);
 
-                cachedBranches = branchesRes.branches || [];
-                cachedLogs = logsRes.logs || [];
+                if (branchesRes && Array.isArray(branchesRes.branches)) {
+                    cachedBranches = branchesRes.branches;
+                }
+                if (logsRes && Array.isArray(logsRes.logs)) {
+                    cachedLogs = logsRes.logs;
+                }
 
                 renderMetrics();
                 renderBranches();
