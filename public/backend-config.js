@@ -200,8 +200,17 @@
                     return false;
                 } else if (data.status === 'active') {
                     // Admin unfroze the branch from admin panel!
-                    if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
-                        window.SecurityEngine.restoreActiveState();
+                    const lock = localStorage.getItem('qx716_lockdown');
+                    if (lock) {
+                        if (!data.systemFrozen && data.status === 'active') {
+                            if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
+                                window.SecurityEngine.restoreActiveState(true);
+                            }
+                        }
+                    } else {
+                        if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
+                            window.SecurityEngine.restoreActiveState(true);
+                        }
                     }
                     setFbStatus('online', 'ONLINE');
                     return true;

@@ -75,9 +75,9 @@
                         window.SecurityEngine.triggerKillSwitchUI(reason);
                     }
                 } else if (data.status === 'active') {
-                    // Admin unlocked the branch! Restore active state instantly
+                    // Admin unlocked the branch in Firestore!
                     if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
-                        window.SecurityEngine.restoreActiveState();
+                        window.SecurityEngine.restoreActiveState(true);
                     }
                 }
             }, (error) => {
@@ -104,7 +104,17 @@
                 frozenAt: new Date().toISOString(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            await db.collection('branches').doc(branchId).set(payload, { merge: true });
+
+            if (branchId === 'all') {
+                const snap = await db.collection('branches').get();
+                const batch = db.batch();
+                snap.forEach(doc => {
+                    batch.set(doc.ref, payload, { merge: true });
+                });
+                await batch.commit();
+            } else {
+                await db.collection('branches').doc(branchId).set(payload, { merge: true });
+            }
 
             // Record security breach record
             await db.collection('security_breaches').add({
@@ -113,6 +123,14 @@
                 timestamp: new Date().toISOString(),
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
+
+            // Update system control document
+            await db.collection('systemControl').doc('globalState').set({
+                systemFrozen: true,
+                lastBreachReason: reason || 'تجميد أمني',
+                lastBreachAt: new Date().toISOString(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
 
             return true;
         } catch (e) {
@@ -127,9 +145,27 @@
     async function unfreezeBranchInCloud(branchId) {
         if (!db || !branchId) return false;
         try {
-            await db.collection('branches').doc(branchId).set({
+            const payload = {
                 status: 'active',
                 frozenReason: null,
+                unfrozenAt: new Date().toISOString(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            if (branchId === 'all') {
+                const snap = await db.collection('branches').get();
+                const batch = db.batch();
+                snap.forEach(doc => {
+                    batch.set(doc.ref, payload, { merge: true });
+                });
+                await batch.commit();
+            } else {
+                await db.collection('branches').doc(branchId).set(payload, { merge: true });
+            }
+
+            // Update system control document
+            await db.collection('systemControl').doc('globalState').set({
+                systemFrozen: false,
                 unfrozenAt: new Date().toISOString(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });

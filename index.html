@@ -44,19 +44,29 @@
                 const branch = localStorage.getItem('qx716_active_branch');
                 let isFrozen = false;
                 let isDeactivated = false;
+                let reason = '';
                 if (lock) {
                     const l = JSON.parse(lock);
-                    if (l && l.frozen) isFrozen = true;
+                    if (l && l.frozen) {
+                        isFrozen = true;
+                        reason = l.reason || '';
+                    }
                 }
                 if (branch) {
                     const b = JSON.parse(branch);
-                    if (b && b.status === 'frozen') isFrozen = true;
+                    if (b && b.status === 'frozen') {
+                        isFrozen = true;
+                        if (!reason) reason = b.frozenReason || '';
+                    }
                     if (b && b.status === 'deactivated') isDeactivated = true;
                 }
                 if (isDeactivated) {
                     document.documentElement.classList.add('system-terminated');
+                    window.__NEXUS_HARD_TERMINATED__ = true;
                 } else if (isFrozen) {
                     document.documentElement.classList.add('system-frozen');
+                    window.__NEXUS_HARD_FROZEN__ = true;
+                    window.__NEXUS_FROZEN_REASON__ = reason;
                 }
             } catch(e) {}
         })();
@@ -109,6 +119,23 @@
             </div>
         </div>
     </div>
+
+    <!-- Synchronous Immediate Overlay Display Enforcement -->
+    <script>
+        if (window.__NEXUS_HARD_FROZEN__) {
+            var elBreach = document.getElementById('security-breach-overlay');
+            if (elBreach) elBreach.classList.remove('hidden');
+            if (window.__NEXUS_FROZEN_REASON__) {
+                var elReason = document.getElementById('breach-reason-text');
+                if (elReason) {
+                    elReason.innerHTML = 'تم رصد محاولة فحص العناصر أو فتح أدوات المطور.<br><b class="text-rose-400">تم تجميد هذا الفرع بالكامل وتوقفه عن العمل نهائياً فوراً</b> لحماية البيانات.<br><span class="text-xs text-yellow-300 font-mono mt-1 block">سبب الرصد: ' + window.__NEXUS_FROZEN_REASON__ + '</span><br>لا يمكن إعادة تشغيل هذا الفرع أو فك التجميد إلا من خلال تدخل المدير العام حصراً عبر الإدارة المركزية.';
+                }
+            }
+        } else if (window.__NEXUS_HARD_TERMINATED__) {
+            var elKill = document.getElementById('killswitch-overlay');
+            if (elKill) elKill.classList.remove('hidden');
+        }
+    </script>
 
     <!-- Toast Notification Dispatcher -->
     <div id="toast-wrap"></div>

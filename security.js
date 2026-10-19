@@ -109,10 +109,16 @@
         }
     }
 
-    // Restore active state when Admin explicitly unfreezes the branch
-    function restoreActiveState() {
+    // Restore active state ONLY when Admin explicitly unfreezes the branch
+    function restoreActiveState(isServerConfirmed = false) {
+        if (!isServerConfirmed) {
+            console.warn('[NEXUS Security] Restore ignored: awaiting authoritative server/admin confirmation.');
+            return false;
+        }
         breachActive = false;
         killSwitchActive = false;
+        window.__NEXUS_HARD_FROZEN__ = false;
+        window.__NEXUS_HARD_TERMINATED__ = false;
         document.documentElement.classList.remove('system-frozen');
         document.documentElement.classList.remove('system-terminated');
         if (overlay) overlay.classList.add('hidden');
@@ -125,9 +131,16 @@
                 const b = JSON.parse(raw);
                 b.status = 'active';
                 delete b.frozenReason;
+                delete b.frozenAt;
                 localStorage.setItem('qx716_active_branch', JSON.stringify(b));
             }
         } catch (e) {}
+
+        // Reload views smoothly so branch immediately resumes
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
+        return true;
     }
 
     // 🔒 Remote Kill-Switch / Radical Deactivation Screen
@@ -235,11 +248,25 @@
     // Immediate pre-enforcement on initial script load
     try {
         const lock = localStorage.getItem('qx716_lockdown');
+        const branchRaw = localStorage.getItem('qx716_active_branch');
+        let shouldLock = false;
+        let lockReason = '';
         if (lock) {
             const l = JSON.parse(lock);
             if (l && l.frozen) {
-                triggerPermanentTamperFreeze(l.reason || 'إغلاق أمني مسبق (محاولة تجاوز التجميد عبر التحديث)');
+                shouldLock = true;
+                lockReason = l.reason || 'إغلاق أمني دائم مسبق (محاولة تجاوز التجميد عبر التحديث)';
             }
+        }
+        if (!shouldLock && branchRaw) {
+            const b = JSON.parse(branchRaw);
+            if (b && b.status === 'frozen') {
+                shouldLock = true;
+                lockReason = b.frozenReason || 'تم تجميد الفرع بقرار الإدارة المركزية';
+            }
+        }
+        if (shouldLock) {
+            triggerPermanentTamperFreeze(lockReason);
         }
     } catch (e) {}
 

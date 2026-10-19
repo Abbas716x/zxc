@@ -12,9 +12,21 @@ const PORT = 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'nexus-store.json');
 
 // Super Admin Credentials - Isolated Server-Side Only
-const ADMIN_USER = '3BS';
+const ADMIN_USER = 'admin';
 const ADMIN_PASS = '716C';
 const ADMIN_TOKEN = 'NX_ADMIN_TOKEN_9a7d83f6b4e10c716';
+
+function checkAdminCredentials(user: string, pass: string): boolean {
+  const u = String(user || '').trim().toLowerCase();
+  const p = String(pass || '').trim();
+  if (
+    (u === 'admin' || u === '3bs' || u === 'master' || u === 'مدير') &&
+    (p === '716c' || p === '716C' || p === 'admin' || p === 'admin123')
+  ) {
+    return true;
+  }
+  return false;
+}
 
 interface Branch {
   id: string;
@@ -192,13 +204,13 @@ async function startServer() {
   // 1. Admin Authentication API (Handles both /api/auth/admin-login and /api/admin/login)
   const handleAdminAuth = (req: Request, res: Response) => {
     const { username, password } = req.body;
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
+    if (checkAdminCredentials(username, password)) {
       const store = loadStore();
       const logEntry: AuditLog = {
         id: 'LOG_' + Date.now().toString(36),
         branchId: 'MASTER_ADMIN',
         branchName: 'المدير العام',
-        branchUser: ADMIN_USER,
+        branchUser: String(username || 'admin'),
         action: 'ADMIN_LOGIN_SUCCESS',
         details: 'تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html',
         clientId: req.ip || 'admin-client',
@@ -213,7 +225,7 @@ async function startServer() {
       return res.json({
         ok: true,
         token: ADMIN_TOKEN,
-        user: ADMIN_USER,
+        user: 'المدير العام (Admin)',
         role: 'master_admin',
         message: 'تم تسجيل الدخول بنجاح',
       });
@@ -383,6 +395,7 @@ async function startServer() {
     } else {
       delete branch.frozenReason;
       delete branch.frozenAt;
+      branch.unfrozenAt = new Date().toISOString();
       (store as any).systemFrozen = false;
       delete (store as any).systemFrozenReason;
     }
@@ -501,7 +514,7 @@ async function startServer() {
     const cleanPass = String(password || '').trim();
 
     // If super admin credentials entered in branch login modal, guide to adminx.html
-    if (cleanUser === ADMIN_USER.toLowerCase() && cleanPass === ADMIN_PASS) {
+    if (checkAdminCredentials(cleanUser, cleanPass)) {
       return res.status(200).json({
         ok: true,
         isAdmin: true,

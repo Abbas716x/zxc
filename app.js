@@ -1831,6 +1831,32 @@
 
     async function initApp() {
         try {
+            // Hard Security Freeze Check (Zero Refresh Bypass)
+            const lock = localStorage.getItem('qx716_lockdown');
+            const branch = localStorage.getItem('qx716_active_branch');
+            let isLocked = false;
+            if (lock) {
+                try {
+                    const l = JSON.parse(lock);
+                    if (l && l.frozen) isLocked = true;
+                } catch (e) {}
+            }
+            if (branch) {
+                try {
+                    const b = JSON.parse(branch);
+                    if (b && (b.status === 'frozen' || b.status === 'deactivated')) isLocked = true;
+                } catch (e) {}
+            }
+
+            if (isLocked || window.__NEXUS_HARD_FROZEN__ || window.__NEXUS_HARD_TERMINATED__) {
+                console.warn('⛔ [NEXUS SECURITY] Branch is frozen by security protocol. Normal app flow halted.');
+                // Still connect backend to listen for Admin unfreeze instruction
+                if (window.BackendEngine && typeof window.BackendEngine.init === 'function') {
+                    await window.BackendEngine.init();
+                }
+                return;
+            }
+
             setupKeyboardShortcuts();
             setupGlobalEventDelegation();
 
@@ -1859,6 +1885,14 @@
             });
 
             await window.BackendEngine.init();
+
+            // Verify status again after backend check before launching session
+            const postTenant = window.BackendEngine.getCurrentTenant();
+            if (postTenant && (postTenant.status === 'frozen' || postTenant.status === 'deactivated')) {
+                console.warn('⛔ Branch verified as frozen/deactivated. Halting session launch.');
+                return;
+            }
+
             await initTenantSession();
 
             console.log('%c🚀 X00716 NEXUS Production Core Active (Protected)', 'color:#00FFFF;font-weight:black;font-size:14px');

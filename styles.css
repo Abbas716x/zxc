@@ -1021,11 +1021,12 @@ select.inp option {
 }
 
 /* Security Breach & Kill-Switch Overlays */
+/* Security Breach & Kill-Switch Overlays */
 .security-overlay, .killswitch-overlay {
     position: fixed;
     inset: 0;
-    z-index: 999999;
-    background: rgba(4, 4, 12, 0.96);
+    z-index: 2147483647;
+    background: rgba(4, 4, 12, 0.98);
     backdrop-filter: blur(40px) saturate(150%);
     -webkit-backdrop-filter: blur(40px) saturate(150%);
     display: flex;
@@ -1037,7 +1038,14 @@ select.inp option {
     display: none !important;
 }
 
-/* Hard Permanent Lockdown States (Instant Pre-render Protection) */
+/* Hard Permanent Lockdown States (Zero Refresh Bypass) */
+html.system-frozen body > *:not(#security-breach-overlay):not(#space-bg):not(.bg-orbs):not(.bg-grid-3d):not(.bg-scan):not(.bg-vignette) {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    user-select: none !important;
+}
+
 html.system-frozen #security-breach-overlay {
     display: flex !important;
     opacity: 1 !important;
@@ -1046,12 +1054,7 @@ html.system-frozen #security-breach-overlay {
     z-index: 2147483647 !important;
 }
 
-html.system-frozen #app,
-html.system-frozen #drawer,
-html.system-frozen .modal-bd,
-html.system-frozen header,
-html.system-frozen nav,
-html.system-frozen main {
+html.system-terminated body > *:not(#killswitch-overlay):not(#space-bg):not(.bg-orbs):not(.bg-grid-3d):not(.bg-scan):not(.bg-vignette) {
     display: none !important;
     pointer-events: none !important;
     visibility: hidden !important;
@@ -1064,14 +1067,6 @@ html.system-terminated #killswitch-overlay {
     visibility: visible !important;
     pointer-events: all !important;
     z-index: 2147483647 !important;
-}
-
-html.system-terminated #app,
-html.system-terminated #drawer,
-html.system-terminated .modal-bd {
-    display: none !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
 }
 
 .security-card {
