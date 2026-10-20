@@ -233,7 +233,7 @@
     }
 
     /**
-     * Admin: Listen to all branches live
+     * Admin: Listen to all branches live with sorting
      */
     function listenAllBranches(onBranchesUpdate) {
         if (!db) return null;
@@ -241,8 +241,11 @@
             return db.collection('branches').onSnapshot((snapshot) => {
                 const branches = [];
                 snapshot.forEach((doc) => {
-                    branches.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data() || {};
+                    branches.push({ id: doc.id, ...data });
                 });
+                // Sort by creation or name
+                branches.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
                 if (typeof onBranchesUpdate === 'function') {
                     onBranchesUpdate(branches);
                 }
@@ -255,6 +258,255 @@
     }
 
     /**
+     * Admin: Create / Provision New Branch in Firestore
+     */
+    async function createBranchInCloud(branchData) {
+        if (!db || !branchData || !branchData.id) return false;
+        try {
+            const now = new Date().toISOString();
+            const docData = {
+                id: branchData.id,
+                name: branchData.name || 'فرع جديد',
+                username: branchData.username || branchData.id,
+                password: branchData.password || '716',
+                status: branchData.status || 'active',
+                createdAt: branchData.createdAt || now,
+                lastOpenedAt: branchData.lastOpenedAt || null,
+                openCount: branchData.openCount || 0,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            await db.collection('branches').doc(branchData.id).set(docData, { merge: true });
+
+            // Initialize default tenant data
+            await db.collection('tenantData').doc(branchData.id).set({
+                data: {
+                    tables: [],
+                    debts: [],
+                    invoices: [],
+                    categories: [
+                        { id: 'c1', name: 'صالات البليستيشن', icon: '🎮' },
+                        { id: 'c2', name: 'المشروبات والوجبات', icon: '🥤' }
+                    ],
+                    products: [
+                        { id: 'p1', catId: 'c1', name: 'ساعة PS5 VIP', icon: '🕐', type: 'countdown', duration: 60, price: 4000 },
+                        { id: 'p2', catId: 'c2', name: 'قهوة اسبريسو', icon: '☕', type: 'single', duration: 0, price: 2000 }
+                    ],
+                    revenue: { daily: 0, yesterday: 0, monthly: 0 }
+                },
+                updatedAt: now
+            }, { merge: true });
+
+            // Audit Log
+            await logAudit({
+                branchId: branchData.id,
+                branchName: branchData.name,
+                branchUser: branchData.username,
+                action: 'BRANCH_CREATED',
+                details: `تم إنشاء فرع جديد للنظام سحابياً: ${branchData.name} (المستخدم: ${branchData.username})`,
+                severity: 'normal'
+            });
+
+            return true;
+        } catch (err) {
+            console.error('[NEXUS Firebase] Create branch error:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Admin: Update Branch Credentials / Details in Firestore
+     */
+    async function updateBranchInCloud(branchId, updates) {
+        if (!db || !branchId || !updates) return false;
+        try {
+            const dataToUpdate = {
+                ...updates,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection('branches').doc(branchId).set(dataToUpdate, { merge: true });
+
+            await logAudit({
+                branchId: branchId,
+                branchName: updates.name || branchId,
+                branchUser: updates.username || 'admin',
+                action: 'BRANCH_UPDATED',
+                details: `تم تعديل بيانات واعتماد الفرع: ${updates.name || branchId}`,
+                severity: 'normal'
+            });
+
+            return true;
+        } catch (err) {
+            console.error('[NEXUS Firebase] Update branch error:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Admin: Delete Branch Permanently from Firestore
+     */
+    async function deleteBranchInCloud(branchId, branchName) {
+        if (!db || !branchId) return false;
+        try {
+            await db.collection('branches').doc(branchId).delete();
+            await db.collection('tenantData').doc(branchId).delete();
+
+            await logAudit({
+                branchId: branchId,
+                branchName: branchName || branchId,
+                branchUser: 'admin',
+                action: 'BRANCH_DELETED',
+                details: `تم حذف الفرع نهائياً من قاعدة البيانات: ${branchName || branchId}`,
+                severity: 'warning'
+            });
+
+            return true;
+        } catch (err) {
+            console.error('[NEXUS Firebase] Delete branch error:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Admin: Wipe Tenant Operational Data (Reset tables, debts, invoices)
+     */
+    async function wipeBranchDataInCloud(branchId, branchName) {
+        if (!db || !branchId) return false;
+        try {
+            await db.collection('tenantData').doc(branchId).set({
+                data: {
+                    tables: [],
+                    debts: [],
+                    invoices: [],
+                    categories: [
+                        { id: 'c1', name: 'صالات البليستيشن', icon: '🎮' },
+                        { id: 'c2', name: 'المشروبات والوجبات', icon: '🥤' }
+                    ],
+                    products: [
+                        { id: 'p1', catId: 'c1', name: 'ساعة PS5 VIP', icon: '🕐', type: 'countdown', duration: 60, price: 4000 }
+                    ],
+                    revenue: { daily: 0, yesterday: 0, monthly: 0 }
+                },
+                updatedAt: new Date().toISOString()
+            }, { merge: true });
+
+            await logAudit({
+                branchId: branchId,
+                branchName: branchName || branchId,
+                branchUser: 'admin',
+                action: 'BRANCH_DATA_WIPED',
+                details: `تم تصفير وحذف جميع بيانات وجلسات الفرع: ${branchName || branchId}`,
+                severity: 'warning'
+            });
+
+            return true;
+        } catch (err) {
+            console.error('[NEXUS Firebase] Wipe branch error:', err);
+            throw err;
+        }
+    }
+
+    /**
+     * Admin: Listen to Real-time Audit Logs from Firestore
+     */
+    function listenAuditLogs(onLogsUpdate, limitCount = 60) {
+        if (!db) return null;
+        try {
+            return db.collection('audit_logs')
+                .orderBy('timestamp', 'desc')
+                .limit(limitCount)
+                .onSnapshot((snapshot) => {
+                    const logs = [];
+                    snapshot.forEach(doc => {
+                        logs.push({ id: doc.id, ...doc.data() });
+                    });
+                    if (typeof onLogsUpdate === 'function') {
+                        onLogsUpdate(logs);
+                    }
+                }, (err) => {
+                    console.warn('[NEXUS Firebase] Audit logs listen warning:', err.message);
+                });
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /**
+     * Admin: Clear Audit Logs in Firestore
+     */
+    async function clearAuditLogsInCloud() {
+        if (!db) return false;
+        try {
+            const snap = await db.collection('audit_logs').limit(100).get();
+            const batch = db.batch();
+            snap.forEach(doc => batch.delete(doc.ref));
+            await batch.commit();
+            return true;
+        } catch (e) {
+            console.warn('[NEXUS Firebase] Clear audit logs error:', e);
+            return false;
+        }
+    }
+
+    /**
+     * Initial Seed Helper: Ensures default branches exist in Firestore if empty
+     */
+    async function ensureDefaultBranchesSeeded() {
+        if (!db) return;
+        try {
+            const snap = await db.collection('branches').get();
+            const now = new Date().toISOString();
+
+            if (snap.empty) {
+                console.log('⚡ [NEXUS Firebase] Seeding default branches into Firestore...');
+                const defaultBranches = [
+                    {
+                        id: 'branch_zayouni',
+                        name: 'زیوني',
+                        username: 'zayouni',
+                        password: '716',
+                        status: 'active',
+                        createdAt: now,
+                        lastOpenedAt: now,
+                        openCount: 1
+                    },
+                    {
+                        id: 'branch_mohammed',
+                        name: 'محمد',
+                        username: 'mohammed',
+                        password: '716',
+                        status: 'active',
+                        createdAt: now,
+                        lastOpenedAt: null,
+                        openCount: 0
+                    }
+                ];
+
+                for (const b of defaultBranches) {
+                    await createBranchInCloud(b);
+                }
+            } else {
+                // Check if branch_zayouni is missing full fields (e.g. name or username)
+                const zayouniDoc = snap.docs.find(d => d.id === 'branch_zayouni');
+                if (zayouniDoc) {
+                    const zData = zayouniDoc.data();
+                    if (!zData.name || !zData.username) {
+                        await db.collection('branches').doc('branch_zayouni').set({
+                            name: 'زیوني',
+                            username: 'zayouni',
+                            password: '716',
+                            createdAt: zData.createdAt || now,
+                            openCount: zData.openCount || 1
+                        }, { merge: true });
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[NEXUS Firebase] Seed note:', e.message);
+        }
+    }
+
+    /**
      * Audit Logging
      */
     async function logAudit(entry) {
@@ -262,7 +514,8 @@
         try {
             await db.collection('audit_logs').add({
                 ...entry,
-                timestamp: new Date().toISOString(),
+                timestamp: entry.timestamp || new Date().toISOString(),
+                epoch: entry.epoch || Date.now(),
                 serverTime: firebase.firestore.FieldValue.serverTimestamp()
             });
         } catch (e) {}
@@ -278,9 +531,16 @@
         freezeBranchInCloud,
         unfreezeBranchInCloud,
         deactivateBranchInCloud,
+        createBranchInCloud,
+        updateBranchInCloud,
+        deleteBranchInCloud,
+        wipeBranchDataInCloud,
         saveTenantDataToCloud,
         fetchTenantDataFromCloud,
         listenAllBranches,
+        listenAuditLogs,
+        clearAuditLogsInCloud,
+        ensureDefaultBranchesSeeded,
         logAudit
     };
 

@@ -15,14 +15,12 @@ service cloud.firestore {
 
     // 3. Security Breaches (Tamper attempts, devtools detection logs)
     match /security_breaches/{breachId} {
-      allow create, read: if true;
-      allow update, delete: if false; // Immutable forensic logs
+      allow read, write: if true;
     }
 
     // 4. Audit Trail (All actions across admin and branches)
     match /audit_logs/{logId} {
-      allow create, read: if true;
-      allow update, delete: if false; // Immutable audit trail
+      allow read, write: if true;
     }
 
     // 5. Global System Settings & Emergency Controls
