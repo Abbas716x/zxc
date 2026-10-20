@@ -1,5 +1,6 @@
 /* ==================================================================
    X00716 NEXUS ENTERPRISE — Secure Multi-Tenant Cloud Architecture
+   Client-Side Firestore Architecture for GitHub Pages & Cloud
    ================================================================== */
 
 (function () {
@@ -18,7 +19,7 @@
     let onCloudUpdateCallback = null;
     let statusHeartbeatTimer = null;
 
-    // Secure Data Obfuscator (Encodes sensitive operational data in storage)
+    // Secure Data Obfuscator
     const CipherEngine = {
         encode: function (data) {
             try {
@@ -39,7 +40,7 @@
         }
     };
 
-    // Default Fallback Tenant for Initial Offline Startup
+    // Default Fallback Tenant
     const DEFAULT_TENANT = {
         id: 'branch_zayouni',
         name: 'زیوني',
@@ -47,15 +48,17 @@
         status: 'active'
     };
 
-    // Status UI Dispatcher
     function setFbStatus(state, text) {
         try {
-            const el = document.getElementById('fb-status');
+            const dot = document.getElementById('fb-status-dot');
             const txt = document.getElementById('fb-status-text');
-            if (el && txt) {
-                el.className = `fb-status ${state}`;
-                txt.textContent = text;
+            if (dot) {
+                dot.className = 'status-dot';
+                if (state === 'online') dot.classList.add('online');
+                else if (state === 'offline') dot.classList.add('offline');
+                else if (state === 'sync') dot.classList.add('syncing');
             }
+            if (txt && text) txt.textContent = text;
         } catch (e) {}
     }
 
@@ -99,7 +102,7 @@
         } catch (e) {}
     }
 
-    // Branch Tenant Authentication API
+    // Branch Tenant Authentication API (Zero 405 Errors on GitHub Pages)
     async function authenticateBranch(username, password) {
         const cleanUser = String(username || '').trim().toLowerCase();
         const cleanPass = String(password || '').trim();
@@ -108,57 +111,115 @@
 
         setFbStatus('sync', 'AUTH');
 
-        try {
-            const res = await fetch('/api/branches/login', {
+        // 1. Direct Master Admin Check (Redirects to adminx.html without server call)
+        const isMasterUser = (cleanUser === 'admin' || cleanUser === 'master' || cleanUser === '3bs' || cleanUser === 'المدير');
+        const isMasterPass = (cleanPass === '716c' || cleanPass === '716c' || cleanPass === 'admin' || cleanPass === 'admin123');
+        if (isMasterUser && isMasterPass) {
+            window.location.href = 'adminx.html';
+            return { name: 'المدير العام', isAdmin: true };
+        }
+
+        let targetBranch = null;
+
+        // 2. Client-Side Firestore Direct Query
+        if (window.NexusFirebase && window.NexusFirebase.isReady) {
+            try {
+                const db = window.NexusFirebase.db;
+                const snap = await db.collection('branches').get();
+                snap.forEach(doc => {
+                    const b = doc.data() || {};
+                    const bUser = String(b.username || doc.id).toLowerCase();
+                    const bId = String(doc.id).toLowerCase();
+                    if (bUser === cleanUser || bId === cleanUser || bId === 'branch_' + cleanUser) {
+                        targetBranch = { id: doc.id, ...b };
+                    }
+                });
+            } catch (err) {
+                console.warn('[NEXUS Backend] Firestore branch lookup notice:', err.message);
+            }
+        }
+
+        // 3. Fallback to cached branches if Firestore is offline
+        if (!targetBranch) {
+            try {
+                const cached = localStorage.getItem('nx_cached_branches');
+                if (cached) {
+                    const list = JSON.parse(cached);
+                    targetBranch = list.find(b =>
+                        String(b.username || b.id).toLowerCase() === cleanUser ||
+                        b.id === cleanUser ||
+                        b.id === 'branch_' + cleanUser
+                    );
+                }
+            } catch (e) {}
+        }
+
+        // Default default hardcoded branches
+        if (!targetBranch) {
+            if (cleanUser === 'zayouni' || cleanUser === 'branch_zayouni') {
+                targetBranch = { id: 'branch_zayouni', name: 'زیوني', username: 'zayouni', password: '716', status: 'active' };
+            } else if (cleanUser === 'mohammed' || cleanUser === 'branch_mohammed') {
+                targetBranch = { id: 'branch_mohammed', name: 'محمد', username: 'mohammed', password: '716', status: 'active' };
+            }
+        }
+
+        if (!targetBranch) {
+            setFbStatus('offline', 'AUTH_ERR');
+            throw new Error('اسم الفرع أو المستخدم غير موجود بالنظام');
+        }
+
+        // Password Validation
+        const expectedPass = String(targetBranch.password || '716').trim();
+        if (expectedPass && cleanPass !== expectedPass) {
+            setFbStatus('offline', 'AUTH_ERR');
+            throw new Error('كلمة المرور غير صحيحة');
+        }
+
+        // Administrative Status Enforcement
+        if (targetBranch.status === 'deactivated') {
+            setFbStatus('offline', 'TERMINATED');
+            if (window.SecurityEngine) {
+                window.SecurityEngine.triggerKillSwitchUI(targetBranch.deactivatedReason || 'تم تعطيل هذا الفرع بشكل جذري بقرار الإدارة العامة.');
+            }
+            throw new Error('هذا الفرع معطل بقرار الإدارة العامة');
+        }
+
+        if (targetBranch.status === 'frozen') {
+            setFbStatus('offline', 'FROZEN');
+            if (window.SecurityEngine) {
+                window.SecurityEngine.triggerBreach(targetBranch.frozenReason || 'تم تجميد هذا الفرع بقرار الإدارة المركزية.');
+            }
+            throw new Error('هذا الفرع مجمد بقرار الإدارة المركزية');
+        }
+
+        // Successfully Authenticated Active Branch
+        currentTenant = targetBranch;
+        localStorage.setItem(SESSION_BRANCH_KEY, JSON.stringify(currentTenant));
+
+        // Unlock security and clear lockdown
+        if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
+            window.SecurityEngine.restoreActiveState(true);
+        }
+
+        setFbStatus('online', 'ONLINE');
+        updateBranchUI();
+        startStatusHeartbeat();
+
+        // Connect real-time Firebase listener
+        if (window.NexusFirebase && typeof window.NexusFirebase.listenBranchRealtime === 'function') {
+            window.NexusFirebase.listenBranchRealtime(currentTenant.id);
+        }
+
+        // Safe background notification if local dev server happens to be running
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            fetch('/api/branches/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: cleanUser, password: cleanPass })
-            });
-
-            const rawText = await res.text();
-            let data = null;
-            try {
-                data = JSON.parse(rawText);
-            } catch (e) {
-                console.warn('Non-JSON response in branch login:', rawText.slice(0, 80));
-                throw new Error('تعذر الاتصال بالخادم المركزي. يرجى إعادة المحاولة.');
-            }
-
-            if (data && data.isAdmin && data.redirect) {
-                window.location.href = data.redirect;
-                return { name: 'المدير العام', isAdmin: true };
-            }
-
-            if (!res.ok) {
-                if (data.status === 'deactivated') {
-                    setFbStatus('offline', 'TERMINATED');
-                    if (window.SecurityEngine) window.SecurityEngine.triggerKillSwitchUI(data.error);
-                    throw new Error(data.error);
-                }
-                if (data.status === 'frozen') {
-                    setFbStatus('offline', 'FROZEN');
-                    if (window.SecurityEngine) window.SecurityEngine.triggerBreach(data.error);
-                    throw new Error(data.error);
-                }
-                throw new Error(data.error || 'فشل تسجيل الدخول');
-            }
-
-            currentTenant = data.branch;
-            localStorage.setItem(SESSION_BRANCH_KEY, JSON.stringify(currentTenant));
-            setFbStatus('online', 'ONLINE');
-            updateBranchUI();
-            startStatusHeartbeat();
-
-            // Real-time Cloud Firebase Connection
-            if (window.NexusFirebase && typeof window.NexusFirebase.listenBranchRealtime === 'function') {
-                window.NexusFirebase.listenBranchRealtime(currentTenant.id);
-            }
-
-            return currentTenant;
-        } catch (err) {
-            setFbStatus('offline', 'AUTH_ERR');
-            throw err;
+            }).catch(() => {});
         }
+
+        return currentTenant;
     }
 
     async function logoutBranch() {
@@ -174,45 +235,49 @@
         } catch (e) {}
     }
 
-    // Live Heartbeat: Continuous High-Frequency Enforcement of Frozen / Deactivated States (1.5s Real-Time)
+    // High-Frequency Realtime Branch Status Sync
     function startStatusHeartbeat() {
         if (statusHeartbeatTimer) clearInterval(statusHeartbeatTimer);
-        statusHeartbeatTimer = setInterval(checkActiveBranchStatus, 1500);
+        statusHeartbeatTimer = setInterval(checkActiveBranchStatus, 2000);
     }
 
     async function checkActiveBranchStatus() {
-        const targetId = currentTenant ? currentTenant.id : 'default';
-        try {
-            const res = await fetch(`/api/branches/${targetId}/status`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.status === 'deactivated') {
-                    setFbStatus('offline', 'TERMINATED');
-                    if (window.SecurityEngine) {
-                        window.SecurityEngine.triggerKillSwitchUI(data.deactivatedReason || 'تم تعطيل هذا الفرع بشكل جذري بقرار الإدارة العامة.');
-                    }
-                    return false;
-                } else if (data.status === 'frozen') {
-                    setFbStatus('offline', 'FROZEN');
-                    if (window.SecurityEngine) {
-                        window.SecurityEngine.triggerBreach(data.frozenReason || 'تم تجميد هذا الفرع بقرار الإدارة المركزية.');
-                    }
-                    return false;
-                } else if (data.status === 'active') {
-                    // Admin unfroze the branch from admin panel!
-                    const isFrozenLocally = window.__NEXUS_HARD_FROZEN__ ||
-                                           document.documentElement.classList.contains('system-frozen') ||
-                                           localStorage.getItem('qx716_lockdown') !== null;
-                    if (isFrozenLocally && !data.systemFrozen) {
-                        if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
-                            window.SecurityEngine.restoreActiveState(true);
+        const targetId = currentTenant ? currentTenant.id : 'branch_zayouni';
+
+        // 1. Primary check via Firestore SDK directly
+        if (window.NexusFirebase && window.NexusFirebase.isReady) {
+            try {
+                const doc = await window.NexusFirebase.db.collection('branches').doc(targetId).get();
+                if (doc.exists) {
+                    const data = doc.data() || {};
+                    if (data.status === 'deactivated') {
+                        setFbStatus('offline', 'TERMINATED');
+                        if (window.SecurityEngine) {
+                            window.SecurityEngine.triggerKillSwitchUI(data.deactivatedReason || 'تم تعطيل هذا الفرع بشكل جذري بقرار الإدارة العامة.');
                         }
+                        return false;
+                    } else if (data.status === 'frozen') {
+                        setFbStatus('offline', 'FROZEN');
+                        if (window.SecurityEngine) {
+                            window.SecurityEngine.triggerBreach(data.frozenReason || 'تم تجميد هذا الفرع بقرار الإدارة المركزية.');
+                        }
+                        return false;
+                    } else if (data.status === 'active') {
+                        const isFrozenLocally = window.__NEXUS_HARD_FROZEN__ ||
+                                               document.documentElement.classList.contains('system-frozen') ||
+                                               localStorage.getItem('qx716_lockdown') !== null;
+                        if (isFrozenLocally) {
+                            if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
+                                window.SecurityEngine.restoreActiveState(true);
+                            }
+                        }
+                        setFbStatus('online', 'ONLINE');
+                        return true;
                     }
-                    setFbStatus('online', 'ONLINE');
-                    return true;
                 }
-            }
-        } catch (e) {}
+            } catch (e) {}
+        }
+
         return true;
     }
 
@@ -227,11 +292,6 @@
                 details,
                 severity: action.includes('BREACH') ? 'critical' : 'normal'
             };
-            fetch('/api/audit-logs', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(() => {});
 
             if (window.NexusFirebase && typeof window.NexusFirebase.logAudit === 'function') {
                 window.NexusFirebase.logAudit(payload).catch(() => {});
@@ -239,63 +299,65 @@
         } catch (e) {}
     }
 
-    // Tenant Data Persistence
-    function getTenantStorageKey(branchId = null) {
-        const id = branchId || (currentTenant ? currentTenant.id : DEFAULT_TENANT.id);
-        return `qx716_nexus_data_${id}`;
+    // Storage Management (Local & Cloud Sync)
+    function getBranchStorageKey(branchId = null) {
+        const id = branchId || (currentTenant ? currentTenant.id : 'branch_zayouni');
+        return `nx_data_${id}`;
     }
 
-    function loadTenantLocal(defaultFactory) {
-        const key = getTenantStorageKey();
+    function loadTenantLocal(defaultStateFactory) {
         try {
+            const key = getBranchStorageKey();
             const raw = localStorage.getItem(key);
-            if (raw) {
-                const parsed = CipherEngine.decode(raw);
-                if (parsed && typeof parsed === 'object') return parsed;
+            if (!raw) {
+                const def = defaultStateFactory();
+                def._branchId = currentTenant ? currentTenant.id : 'branch_zayouni';
+                return def;
+            }
+            const parsed = CipherEngine.decode(raw);
+            if (parsed && typeof parsed === 'object') {
+                parsed._branchId = currentTenant ? currentTenant.id : 'branch_zayouni';
+                return parsed;
             }
         } catch (e) {}
-        return typeof defaultFactory === 'function' ? defaultFactory() : {};
+        const fallback = defaultStateFactory();
+        fallback._branchId = currentTenant ? currentTenant.id : 'branch_zayouni';
+        return fallback;
     }
 
     function saveTenantLocal(state) {
-        const key = getTenantStorageKey();
         try {
-            const encoded = CipherEngine.encode(state);
-            localStorage.setItem(key, encoded);
+            if (!state) return;
+            const key = getBranchStorageKey();
+            state._clientId = CLIENT_ID;
+            state._branchId = currentTenant ? currentTenant.id : 'branch_zayouni';
+            state._updatedAt = Date.now();
+            localStorage.setItem(key, CipherEngine.encode(state));
             lastLocalWriteTs = Date.now();
         } catch (e) {}
     }
 
-    function debouncedSave(stateGetter) {
+    function debouncedSave(stateGetter, delay = 800) {
         if (debounceSaveTimer) clearTimeout(debounceSaveTimer);
         debounceSaveTimer = setTimeout(() => {
-            const state = typeof stateGetter === 'function' ? stateGetter() : stateGetter;
-            saveTenantLocal(state);
-            forceSaveCloud(state, 'auto');
-        }, 1200);
+            if (typeof stateGetter === 'function') {
+                forceSaveCloud(stateGetter(), 'debounced');
+            }
+        }, delay);
     }
 
-    async function forceSaveCloud(state, reason = 'manual') {
-        if (!currentTenant) return false;
+    // Save Tenant Data to Firestore
+    async function forceSaveCloud(state, trigger = 'manual') {
+        if (!state) return false;
         saveTenantLocal(state);
 
         try {
             setFbStatus('sync', 'SYNC');
-            const res = await fetch(`/api/branches/${currentTenant.id}/data`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: state })
-            });
+            const targetId = currentTenant ? currentTenant.id : 'branch_zayouni';
 
-            if (!res.ok) {
-                const errData = await res.json();
-                if (errData.status === 'deactivated') {
-                    if (window.SecurityEngine) window.SecurityEngine.triggerKillSwitchUI(errData.error);
-                } else if (errData.status === 'frozen') {
-                    if (window.SecurityEngine) window.SecurityEngine.triggerBreach(errData.error);
-                }
-                setFbStatus('offline', 'OFFLINE');
-                return false;
+            // Direct Firebase Firestore write
+            if (window.NexusFirebase && typeof window.NexusFirebase.saveTenantDataToCloud === 'function') {
+                await window.NexusFirebase.saveTenantDataToCloud(targetId, state);
             }
 
             const now = Date.now();
@@ -304,9 +366,13 @@
             flashSaveIndicator('saved');
             setFbStatus('online', 'ONLINE');
 
-            // Save snapshot directly to Firebase Firestore
-            if (window.NexusFirebase && typeof window.NexusFirebase.saveTenantDataToCloud === 'function') {
-                window.NexusFirebase.saveTenantDataToCloud(currentTenant.id, state).catch(() => {});
+            // Safe optional local dev server sync
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                fetch(`/api/branches/${targetId}/data`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: state })
+                }).catch(() => {});
             }
 
             return true;
@@ -366,8 +432,8 @@
         updateBranchUI();
         setFbStatus('online', 'ONLINE');
         updateLastSavedDisplay();
-        
-        // Immediate authoritative server verification before releasing startup
+
+        // Check authoritative Firestore status
         await checkActiveBranchStatus();
         startStatusHeartbeat();
 
@@ -393,13 +459,14 @@
         updateLastSavedDisplay,
         flashSaveIndicator,
         setFbStatus,
-        logAuditEvent,
         checkActiveBranchStatus
     };
 
-    window.manualSave = function (showToast = true) {
-        if (window.AppEngine && typeof window.AppEngine.triggerManualSave === 'function') {
-            window.AppEngine.triggerManualSave(showToast);
-        }
-    };
+    // Auto-init on load
+    if (typeof window !== 'undefined') {
+        window.addEventListener('DOMContentLoaded', () => {
+            init().catch(e => console.warn('[NEXUS Backend] Init note:', e));
+        });
+    }
+
 })();

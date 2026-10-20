@@ -613,8 +613,12 @@
             }, 3500);
         }
 
-        // Safe Background Server Sync (Never fails or throws 405 on GitHub Pages)
+        // Safe Background Server Sync (Zero 405 Errors on GitHub Pages & Static Hosts)
         async function safeApiSync(endpoint, options = {}) {
+            // Only perform local server requests if running on local fullstack node/express server
+            const isLocalServer = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.port === '3000');
+            if (!isLocalServer) return null;
+
             try {
                 options.headers = options.headers || {};
                 if (currentAdminToken) options.headers['Authorization'] = `Bearer ${currentAdminToken}`;
@@ -730,13 +734,17 @@
             if (isFirebaseListening) return;
             isFirebaseListening = true;
 
-            // 2. Real-Time Listener for Branches Collection (<100ms Push)
-            if (typeof window.NexusFirebase.listenAllBranches === 'function') {
-                window.NexusFirebase.listenAllBranches((branches) => {
-                    console.log('📡 [NEXUS Admin] Firestore Realtime Branches push:', branches.length);
+            // 2. Real-Time Listener for Branches Collection (<100ms Push) with Live Counters
+            const branchesListener = (typeof window.NexusFirebase.fetchBranches === 'function')
+                ? window.NexusFirebase.fetchBranches
+                : window.NexusFirebase.listenAllBranches;
+
+            if (typeof branchesListener === 'function') {
+                branchesListener((branches, liveMetrics) => {
+                    console.log('📡 [NEXUS Admin] Firestore Realtime Branches push:', (branches || []).length);
                     cachedBranches = branches || [];
                     renderEmergencyAlerts();
-                    renderMetrics();
+                    renderMetrics(liveMetrics);
                     renderBranches();
                     renderActivityTimeline();
                 });
