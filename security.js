@@ -115,8 +115,15 @@
             console.warn('[NEXUS Security] Restore ignored: awaiting authoritative server/admin confirmation.');
             return false;
         }
+
+        const wasFrozen = breachActive || killSwitchActive ||
+                          document.documentElement.classList.contains('system-frozen') ||
+                          document.documentElement.classList.contains('system-terminated') ||
+                          localStorage.getItem('qx716_lockdown') !== null;
+
         breachActive = false;
         killSwitchActive = false;
+        window.__JUST_UNFROZEN__ = Date.now();
         window.__NEXUS_HARD_FROZEN__ = false;
         window.__NEXUS_HARD_TERMINATED__ = false;
         document.documentElement.classList.remove('system-frozen');
@@ -136,10 +143,12 @@
             }
         } catch (e) {}
 
-        // Reload views smoothly so branch immediately resumes
-        setTimeout(() => {
-            window.location.reload();
-        }, 300);
+        // Reload views ONLY if the branch was previously frozen, to cleanly rehydrate state
+        if (wasFrozen) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        }
         return true;
     }
 
@@ -210,16 +219,18 @@
     let devtoolsDetectionCounter = 0;
     function runDebuggerDetection() {
         if (breachActive || killSwitchActive) return;
+        // 15 seconds grace period after unfreeze or initial mount to prevent false-positives
+        if (window.__JUST_UNFROZEN__ && (Date.now() - window.__JUST_UNFROZEN__ < 15000)) return;
         try {
             const start = performance.now();
-            // Function constructor to evade simple static string analysis
             const trap = new Function('debugger');
             trap();
             const elapsed = performance.now() - start;
 
-            if (elapsed > 120) {
+            // Only trigger on genuine human debugger pausing (> 450ms sustained across 3 cycles)
+            if (elapsed > 450) {
                 devtoolsDetectionCounter++;
-                if (devtoolsDetectionCounter >= 2) {
+                if (devtoolsDetectionCounter >= 3) {
                     triggerPermanentTamperFreeze('رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)');
                 }
             } else {
@@ -229,21 +240,7 @@
     }
 
     // Run periodic detector
-    setInterval(runDebuggerDetection, 3500);
-
-    // 4. Console Inspection Probe Trap
-    try {
-        const probe = new Image();
-        Object.defineProperty(probe, 'id', {
-            get: function () {
-                triggerPermanentTamperFreeze('رصد استدعاء وفحص كائنات وحدة التحكم (Console Probe)');
-            }
-        });
-        // Non-intrusive probe log
-        setTimeout(() => {
-            console.log('%c ', probe);
-        }, 1000);
-    } catch (e) {}
+    setInterval(runDebuggerDetection, 4000);
 
     // Immediate pre-enforcement on initial script load
     try {

@@ -200,14 +200,10 @@
                     return false;
                 } else if (data.status === 'active') {
                     // Admin unfroze the branch from admin panel!
-                    const lock = localStorage.getItem('qx716_lockdown');
-                    if (lock) {
-                        if (!data.systemFrozen && data.status === 'active') {
-                            if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
-                                window.SecurityEngine.restoreActiveState(true);
-                            }
-                        }
-                    } else {
+                    const isFrozenLocally = window.__NEXUS_HARD_FROZEN__ ||
+                                           document.documentElement.classList.contains('system-frozen') ||
+                                           localStorage.getItem('qx716_lockdown') !== null;
+                    if (isFrozenLocally && !data.systemFrozen) {
                         if (window.SecurityEngine && typeof window.SecurityEngine.restoreActiveState === 'function') {
                             window.SecurityEngine.restoreActiveState(true);
                         }

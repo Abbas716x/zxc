@@ -39,6 +39,7 @@ interface Branch {
   openCount: number;
   frozenReason?: string;
   frozenAt?: string;
+  unfrozenAt?: string;
   deactivatedAt?: string;
   deactivatedReason?: string;
 }
@@ -356,6 +357,59 @@ async function startServer() {
     return res.json({ ok: true, message: `تم حذف الفرع (${branch.name}) بنجاح` });
   });
 
+  // Admin: Update Branch Credentials (Name, Username, Password)
+  app.put('/api/admin/branches/:id', requireAdmin, (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { name, username, password } = req.body;
+    const store = loadStore();
+    const branch = store.branches.find(b => b.id === id);
+    if (!branch) {
+      return res.status(404).json({ error: 'الفرع غير موجود' });
+    }
+
+    if (name) branch.name = String(name).trim();
+    if (username) branch.username = String(username).trim();
+    if (password) branch.password = String(password).trim();
+
+    const logEntry: AuditLog = {
+      id: 'LOG_' + Date.now().toString(36),
+      branchId: id,
+      branchName: branch.name,
+      branchUser: branch.username,
+      action: 'BRANCH_UPDATED',
+      details: `تم تعديل بيانات واعتماد الفرع: ${branch.name}`,
+      clientId: req.ip || 'admin',
+      timestamp: new Date().toISOString(),
+      epoch: Date.now(),
+      severity: 'normal',
+    };
+    store.auditLogs.unshift(logEntry);
+    saveStore(store);
+
+    return res.json({ ok: true, branch, message: `تم تحديث بيانات الفرع (${branch.name}) بنجاح` });
+  });
+
+  // Admin: Live Inspection of Branch Data (Tables, Invoices, Debts, Revenue)
+  app.get('/api/admin/branches/:id/data', requireAdmin, (req: Request, res: Response) => {
+    const { id } = req.params;
+    const store = loadStore();
+    const branch = store.branches.find(b => b.id === id);
+    if (!branch) {
+      return res.status(404).json({ error: 'الفرع غير موجود' });
+    }
+
+    const data = store.tenantData[id] || {
+      tables: [],
+      debts: [],
+      invoices: [],
+      categories: [],
+      products: [],
+      revenue: { daily: 0, yesterday: 0, monthly: 0 },
+    };
+
+    return res.json({ ok: true, branch, data });
+  });
+
   // Freeze / Unfreeze Branch
   app.put('/api/admin/branches/:id/freeze', requireAdmin, (req: Request, res: Response) => {
     const { id } = req.params;
@@ -636,6 +690,20 @@ async function startServer() {
 
     const breachReason = reason || 'محاولة فحص الأكواد أو فتح أدوات المطور (DevTools / Inspect)';
     const now = new Date().toISOString();
+
+    // If admin just unfroze the branch within the last 15 seconds, honor the admin decision and permit clean reload
+    if (branch && branch.unfrozenAt) {
+      const msSinceUnfreeze = Date.now() - new Date(branch.unfrozenAt).getTime();
+      if (msSinceUnfreeze < 15000) {
+        return res.json({
+          ok: true,
+          gracePeriod: true,
+          status: branch.status,
+          message: 'فترة سماح نشطة بعد فك التجميد الإداري',
+        });
+      }
+    }
+
     const alreadyFrozen = branch && branch.status === 'frozen';
 
     if (branch) {
@@ -768,8 +836,7 @@ async function startServer() {
     next(err);
   });
 
-  // Directly serve static assets (scripts, styles, icons, manifest) with correct MIME types
-  app.use(express.static(__dirname, { index: false }));
+  // Directly serve public static assets
   app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
   // Mount Vite or Static files depending on environment

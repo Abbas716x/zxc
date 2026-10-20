@@ -5,13 +5,11 @@
       "name": "زیوني",
       "username": "zayouni",
       "password": "716",
-      "status": "frozen",
+      "status": "active",
       "createdAt": "2026-10-18T00:22:00.588Z",
       "lastOpenedAt": "2026-10-18T00:22:00.588Z",
       "openCount": 1,
-      "unfrozenAt": "2026-10-19T00:57:01.873Z",
-      "frozenReason": "رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "frozenAt": "2026-10-19T00:59:07.994Z"
+      "unfrozenAt": "2026-10-20T04:22:11.473Z"
     },
     {
       "id": "branch_mohammed",
@@ -244,6 +242,126 @@
     }
   },
   "auditLogs": [
+    {
+      "id": "LOG_mvg6fp5d",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:22:11.473Z",
+      "epoch": 1792470131473,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvg6f87a",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:21:49.510Z",
+      "epoch": 1792470109510,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvg6ev7l",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:21:32.673Z",
+      "epoch": 1792470092673,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvg6egos",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:21:13.852Z",
+      "epoch": 1792470073852,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvg6efin",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:21:12.335Z",
+      "epoch": 1792470072335,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvg6dw7x",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:20:47.325Z",
+      "epoch": 1792470047325,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvg6du1j",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:20:44.504Z",
+      "epoch": 1792470044504,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvg6capl",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "TAMPER_SECURITY_BREACH",
+      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:19:32.793Z",
+      "epoch": 1792469972793,
+      "severity": "critical"
+    },
+    {
+      "id": "LOG_mvg6c8ew",
+      "branchId": "branch_zayouni",
+      "branchName": "زیوني",
+      "branchUser": "zayouni",
+      "action": "BRANCH_UNFROZEN",
+      "details": "تم فك تجميد الفرع وإعادته للعمل: زیوني",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:19:29.816Z",
+      "epoch": 1792469969816,
+      "severity": "normal"
+    },
+    {
+      "id": "LOG_mvg6c2z3",
+      "branchId": "MASTER_ADMIN",
+      "branchName": "المدير العام",
+      "branchUser": "admin",
+      "action": "ADMIN_LOGIN_SUCCESS",
+      "details": "تسجيل دخول ناجح للمدير العام إلى لوحة التحكم adminx.html",
+      "clientId": "127.0.0.1",
+      "timestamp": "2026-10-20T04:19:22.767Z",
+      "epoch": 1792469962767,
+      "severity": "normal"
+    },
     {
       "id": "LOG_mvejqpne",
       "branchId": "branch_zayouni",
@@ -1083,128 +1201,7 @@
       "timestamp": "2026-10-19T00:53:46.238Z",
       "epoch": 1792371226238,
       "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjr2g",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:43.240Z",
-      "epoch": 1792371223240,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjor7",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:40.243Z",
-      "epoch": 1792371220243,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjmfh",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:37.229Z",
-      "epoch": 1792371217229,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjk4d",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:34.237Z",
-      "epoch": 1792371214237,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjht3",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:31.239Z",
-      "epoch": 1792371211239,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjfhq",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:28.238Z",
-      "epoch": 1792371208238,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjd65",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:25.229Z",
-      "epoch": 1792371205229,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejjauv",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:22.231Z",
-      "epoch": 1792371202231,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejj8jh",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:19.229Z",
-      "epoch": 1792371199229,
-      "severity": "critical"
-    },
-    {
-      "id": "LOG_mvejj687",
-      "branchId": "branch_zayouni",
-      "branchName": "زیوني",
-      "branchUser": "zayouni",
-      "action": "TAMPER_SECURITY_BREACH",
-      "details": "🚨 خرق أمني فوري: تم رصد محاولة فحص الأكواد/DevTools. تم تجميد الفرع والنظام تلقائياً وبشكل دائم! التفاصيل: رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)",
-      "clientId": "127.0.0.1",
-      "timestamp": "2026-10-19T00:53:16.231Z",
-      "epoch": 1792371196231,
-      "severity": "critical"
     }
   ],
-  "systemFrozen": true,
-  "systemFrozenReason": "رصد تشغيل مصيدة تصحيح الأخطاء ومحاولة تنقيح الكود (Debugger Trap)"
+  "systemFrozen": false
 }
